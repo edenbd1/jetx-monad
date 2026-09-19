@@ -15,7 +15,6 @@ import {JetUSD} from "./JetUSD.sol";
 ///      a production version would use a VRF or a commit-reveal house seed.
 contract JetX is Ownable {
     uint256 public constant MIN_BET = 0.1e6;
-    uint256 public constant MAX_BET = 1_000e6;
     uint256 public constant FAUCET_AMOUNT = 1_000e6;
     uint256 public constant FAUCET_THRESHOLD = 100e6;
     /// @notice Hard bounds for the house-set cap on crash points (2x .. 1000x).
@@ -90,9 +89,9 @@ contract JetX is Ownable {
     // ---------------------------------------------------------------- player
 
     /// @notice Tx 1: burns the bet and draws this flight's crash point. Any flight the player
-    ///         left unfinished is forfeited first.
+    ///         left unfinished is forfeited first. No maximum: the only limit is the player's balance.
     function launch(uint256 bet) external returns (uint256 id) {
-        if (bet < MIN_BET || bet > MAX_BET) revert BadBet();
+        if (bet < MIN_BET || bet > type(uint96).max) revert BadBet();
         uint256 previous = activeRound[msg.sender];
         if (previous != 0) _crash(previous);
 

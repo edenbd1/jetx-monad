@@ -126,8 +126,20 @@ contract JetXTest is Test {
         vm.expectRevert(JetX.BadBet.selector);
         game.launch(0.01e6);
         vm.expectRevert(JetX.BadBet.selector);
-        game.launch(1_001e6);
+        game.launch(uint256(type(uint96).max) + 1);
         vm.stopPrank();
+    }
+
+    function test_betIsOnlyLimitedByBalance() public {
+        vm.prank(house);
+        game.grant(alice, 49_000e6);
+        vm.startPrank(alice);
+        vm.expectRevert();
+        game.launch(50_001e6);
+        uint256 id = game.launch(50_000e6);
+        vm.stopPrank();
+        assertEq(usd.balanceOf(alice), 0);
+        assertEq(game.getRound(id).bet, 50_000e6);
     }
 
     function test_onlyGameMovesTokensAndOnlyHouseGrants() public {

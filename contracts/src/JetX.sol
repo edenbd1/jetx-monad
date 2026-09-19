@@ -9,7 +9,8 @@ import {JetUSD} from "./JetUSD.sol";
 ///         `launch` (bet burned, crash point drawn) and either `cashOut` at the multiplier the
 ///         player stopped at, or `settle` once the rocket blew up.
 /// @dev Multipliers are fixed-point x100 (250 = 2.50x). The crash point follows the classic
-///      crash-game distribution P(crash >= x) = 0.97 / x (3% house edge, 3% instant busts).
+///      crash-game distribution P(crash >= x) = 0.97 / x (3% house edge, 3% instant busts),
+///      capped at `maxMultiplier` (50x by default).
 ///      Randomness comes from block data at launch: fine for a testnet game with test dollars,
 ///      a production version would use a VRF or a commit-reveal house seed.
 contract JetX is Ownable {
@@ -17,7 +18,9 @@ contract JetX is Ownable {
     uint256 public constant MAX_BET = 1_000e6;
     uint256 public constant FAUCET_AMOUNT = 1_000e6;
     uint256 public constant FAUCET_THRESHOLD = 100e6;
-    uint32 public constant MAX_MULTIPLIER = 100_000; // 1000x
+    /// @notice Hard bounds for the house-set cap on crash points (2x .. 1000x).
+    uint32 public constant MIN_CAP = 200;
+    uint32 public constant MAX_CAP = 100_000;
     uint256 public constant RTP_BPS = 9_700; // 97% return to player
     uint256 public constant ABANDON_AFTER = 1 hours;
     uint256 public constant HISTORY = 20;
@@ -47,6 +50,9 @@ contract JetX is Ownable {
     uint32[HISTORY] internal _recent;
     uint256 internal _recentCount;
 
+    /// @notice Crash points are capped here (x100). Starts at 50x.
+    uint32 public maxMultiplier = 5_000;
+
     uint256 public totalWagered;
     uint256 public totalPaid;
     uint32 public bestCashOut;
@@ -56,6 +62,7 @@ contract JetX is Ownable {
     event CashedOut(uint256 indexed id, address indexed player, uint32 multiplier, uint256 payout, uint32 crash);
     event Crashed(uint256 indexed id, address indexed player, uint256 bet, uint32 crash);
     event Faucet(address indexed player, uint256 amount);
+    event MaxMultiplierSet(uint32 maxMultiplier);
 
     error BadBet();
     error NotYourRound();
@@ -64,6 +71,7 @@ contract JetX is Ownable {
     error AboveCrash();
     error StillFlying();
     error NotBroke();
+    error BadCap();
 
     constructor(address owner_) Ownable(owner_) {
         usd = new JetUSD(address(this));
@@ -126,6 +134,13 @@ contract JetX is Ownable {
 
     // ---------------------------------------------------------------- house
 
+    /// @notice Caps every future crash point (x100), within [MIN_CAP, MAX_CAP].
+    function setMaxMultiplier(uint32 cap) external onlyOwner {
+        if (cap < MIN_CAP || cap > MAX_CAP) revert BadCap();
+        maxMultiplier = cap;
+        emit MaxMultiplierSet(cap);
+    }
+
     /// @notice Lets the house top up players it onboards (managed wallets).
     function grant(address to, uint256 amount) external onlyOwner {
         usd.mint(to, amount);
@@ -169,7 +184,7 @@ contract JetX is Ownable {
         ) % 1e6;
         uint256 crash = RTP_BPS * 1e4 / (1e6 - r); // x100
         if (crash < 100) crash = 100;
-        if (crash > MAX_MULTIPLIER) crash = MAX_MULTIPLIER;
+        if (crash > maxMultiplier) crash = maxMultiplier;
         return uint32(crash);
     }
 }

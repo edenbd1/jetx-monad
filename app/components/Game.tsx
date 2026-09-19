@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { KaarisCam, type KaarisCamHandle } from "@/components/KaarisCam";
 import { Sky, type Scene } from "@/components/Sky";
 import { getChain } from "@/lib/get-chain";
-import { msToReach, multiplierAt, toX100, type Address, type Balances, type Flight, type TxInfo } from "@/lib/game-types";
+import { msToReach, multiplierAt, toX100, type Address, type Balances, type Flight, type GameChain, type TxInfo } from "@/lib/game-types";
 import { KaarisDirector, RULES } from "@/lib/kaaris";
 import { mult, short, tier, usd } from "@/lib/format";
 
@@ -111,20 +111,32 @@ export function Game() {
 
   // ---------------------------------------------------------------- flow
 
+  // The managed wallet is created and sponsored (gas + 1,000 test USDC) as soon as the page loads,
+  // so the dollars are already there when the player taps in. No login, no wallet, no signature.
+  const readying = useRef<ReturnType<GameChain["ready"]> | null>(null);
+  const prepare = useCallback(() => {
+    readying.current ??= getChain().ready();
+    return readying.current;
+  }, []);
+  useEffect(() => {
+    prepare().catch(() => undefined);
+  }, [prepare]);
+
   function enter() {
     // Runs inside the tap: this unlocks audio on the facecam's <video>.
     director().landing();
     setStage("loading");
-    const chain = getChain();
-    chain
-      .ready()
+    prepare()
       .then(({ address, balances }) => {
         setAddress(address);
         setBal(balances);
       })
-      .catch(showError)
+      .catch((e) => {
+        readying.current = null; // let the next tap retry
+        showError(e);
+      })
       .finally(() => setStage("play"));
-    chain
+    getChain()
       .history()
       .then(setHistory)
       .catch(() => undefined);

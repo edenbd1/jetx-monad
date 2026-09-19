@@ -14,7 +14,7 @@ Built at **Monad Blitz Paris** (19 September 2026).
 - **Two transactions per rocket.** `launch(bet)` when you tap BET (the bet is burned and the crash point drawn), then `cashOut(id, multiplier)` when you tap CASH OUT, or `settle(id)` once the rocket has blown up. Every flight is on-chain and linked to the explorer.
 - **Bet what you have.** From $0.10 up to the whole balance (MAX chip): there is no house maximum, so a lucky run can go all-in on its winnings.
 - **Instant on Monad.** Transactions are signed in the browser with a pre-warmed nonce, fees and gas limit, and sent with `eth_sendRawTransactionSync`: one round trip returns the receipt, in about half a second.
-- **Kaaris reacts live, with the French meme crew.** A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, dealt like a shuffled deck saved on the device: every meme of a pool plays before one comes back, none plays twice in the same flight, and the next game carries on the decks instead of replaying the same lines at the same spots:
+- **Kaaris reacts live, with the French meme crew.** Besides his rocket-game ad, Kaaris's own classics ("Tchoin", "que du sale", "ça rend ouf", "j'm'en bats les c…", "ça vaut des millions", "une grosse galère", "t'es un menteur et un tricheur"). A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, dealt like a shuffled deck saved on the device: every meme of a pool plays before one comes back, none plays twice in the same flight, and the next game carries on the decks instead of replaying the same lines at the same spots:
   - **start:** Kaaris only, "allez, je vais jouer 10 balles… c'est parti";
   - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée", "oh là là", "énorme", Jacquouille's "Okayyy", JCVD's "je suis aware", "c'est une dinguerie", "magnifique";
   - **orbit (random slot between 2.2x and 3.5x, every flight that gets there):** Thomas Pesquet, big and centred;
@@ -77,7 +77,7 @@ BASE_URL=https://jetx-monad.vercel.app npx playwright test
 ```
 contracts/   Foundry: src/JetX.sol, src/JetUSD.sol, tests (incl. distribution check), deploy script
 app/         Next.js mobile game: rocket canvas, bet panel, Kaaris clip engine, managed wallet, /api/fund
-app/public/kaaris/   65 reaction clips + clips.json (caption, trigger, speaker)
+app/public/kaaris/   73 reaction clips + clips.json (caption, trigger, speaker)
 e2e/         Playwright tests against the live game (phone viewport, on-chain assertions)
 docs/        Screenshots
 ```

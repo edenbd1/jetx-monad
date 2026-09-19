@@ -15,17 +15,17 @@ test.use({ ...iphone, baseURL: MOCK_URL });
 
 // Mirrors POOLS in app/lib/kaaris.ts.
 const P = {
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay"],
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay", "kaaris-tchoin", "kaaris-que-du-sale"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd", "kaaris-tchoin", "kaaris-que-du-sale", "kaaris-rend-ouf"],
   orbit: ["thomas-pesquet"],
   cashTiny: ["eleonore", "ravi", "rigolo", "cest-cela-oui"],
   cashSix: ["je-marrete-a-6", "bim-bam-boom"],
-  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique", "kaaris-des-millions"],
   regret: ["la-haine", "pas-fini"],
   crashBust: ["brogniart-ah", "bravo-nils", "putain", "ravi", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "pas-de-bras", "visiteurs-binz"],
-  crashSmall: ["bravo-nils", "putain", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "houston", "cest-cela-oui", "pas-de-bras"],
-  crashBig: ["bravo-nils", "la-haine", "catastrophe", "macron-explosion", "putain", "boulette", "sentence-irrevocable", "monde-de-merde", "etchebest", "visiteurs-binz", "houston"],
-  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"],
+  crashSmall: ["bravo-nils", "putain", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "houston", "cest-cela-oui", "pas-de-bras", "kaaris-menteur-tricheur", "kaaris-gros-menteur"],
+  crashBig: ["bravo-nils", "la-haine", "catastrophe", "macron-explosion", "putain", "boulette", "sentence-irrevocable", "monde-de-merde", "etchebest", "visiteurs-binz", "houston", "kaaris-grosse-galere"],
+  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu", "kaaris-gros-menteur"],
   idle: ["laisse-voler", "pas-faux", "tres-simple", "bonne-situation", "cest-cela-oui"],
   broke: ["swipe-up", "la-hess", "malentendu", "pas-de-bras"],
 };

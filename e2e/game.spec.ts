@@ -6,6 +6,7 @@ import {
   clips,
   CRASH_CLIPS,
   enter,
+  launch,
   recordClips,
   RETRY_CLIPS,
   setAuto,
@@ -101,8 +102,10 @@ test("manual cash-out mid-flight pays exactly bet x the multiplier at the tap", 
     const before = await usdc(player);
     await setBet(page, 2);
     await setAuto(page, null);
-    await bet().tap();
-    await expect(cash()).toBeVisible({ timeout: 20_000 });
+    if ((await launch(page)) === "busted") {
+      await waitForNextRound(page);
+      continue;
+    }
     const id = await activeRound(player);
     const flight = await round(id);
     if (flight.crash < 145) {
@@ -131,8 +134,10 @@ test("Thomas Pesquet: past 5x the big ref plays with its banner, and cashing out
     const before = await usdc(player);
     await setBet(page, 1);
     await setAuto(page, null);
-    await bet().tap();
-    await expect(cash()).toBeVisible({ timeout: 20_000 });
+    if ((await launch(page)) === "busted") {
+      await waitForNextRound(page);
+      continue;
+    }
     const id = await activeRound(player);
     if ((await round(id)).crash < 540) {
       await waitForNextRound(page);
@@ -152,7 +157,7 @@ test("Thomas Pesquet: past 5x the big ref plays with its banner, and cashing out
   test.skip(true, "no 5.4x flight in 12 tries");
 });
 
-test("reloading keeps the same managed wallet and doesn't refund it", async () => {
+test("reloading keeps the same managed wallet, topping up gas only when it runs low", async () => {
   const monBefore = await mon(player);
   const usdcBefore = await usdc(player);
   await page.reload();
@@ -163,7 +168,9 @@ test("reloading keeps the same managed wallet and doesn't refund it", async () =
   const { addressOfKey } = await import("./chain");
   expect(addressOfKey(key as `0x${string}`)).toBe(player);
   expect(await usdc(player)).toBeCloseTo(usdcBefore, 6);
-  expect(await mon(player)).toBeLessThanOrEqual(monBefore + 1e-9);
+  // The house refills gas below 0.05 MON (a flight costs ~0.025), never above.
+  if (monBefore >= 0.05) expect(await mon(player)).toBeLessThanOrEqual(monBefore + 1e-9);
+  else expect(await mon(player)).toBeGreaterThanOrEqual(0.2);
 });
 
 test("broke: losing everything shows REFILL, which tops the wallet back up to 1,000 USDC", async () => {

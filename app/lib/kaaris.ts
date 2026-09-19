@@ -28,15 +28,15 @@ export const POOLS = {
   /** Every flight starts with Kaaris placing his bet. */
   start: ["depart"],
   /** Just after lift-off, below 2x. */
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini", "cest-parti", "celle-la-bonne", "okay"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay"],
   /** Climbing, 2x-6x. */
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
-  /** The orbit moment somewhere around 5x: Thomas Pesquet most of the time, else Buzz or "laisse voler". */
-  orbit: [{ id: "thomas-pesquet", w: 4 }, { id: "infini", w: 1.5 }, "laisse-voler"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
+  /** The orbit moment: Thomas Pesquet, big and centred, in every flight that gets there. */
+  orbit: ["thomas-pesquet"],
   /** Getting scary, 6x-12x. */
   high: ["ah-gars", "avant-quil-explose", "tous-mourir", "ca-va-peter", "dernier-mot", "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
   /** Deep space, 12x+. */
-  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "dernier-mot", "infini", "dinguerie"],
+  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "dernier-mot", "dinguerie"],
   /** The player already cashed out and the rocket keeps going. */
   afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca", "oh-la-la", "enorme", "valide", "magnifique", "okay"],
   /** Cash-outs by size. */
@@ -115,8 +115,10 @@ export const POOLS = {
 
 export const RULES = {
   intro: "intro",
-  /** The orbit line fires once per flight at a random point in this range (multiplier). */
-  orbitAt: [4.5, 6],
+  /** Always shown big and centred with its banner. */
+  moonClip: "thomas-pesquet",
+  /** The orbit line (Thomas Pesquet) fires once per flight at a random point in this range (multiplier), cashed out or not. */
+  orbitAt: [2.2, 3.5],
   /** Scary lines get a slot once per flight at a random point in each of these ranges. */
   highAt: [7, 10],
   spaceAt: [13, 22],
@@ -158,7 +160,7 @@ const PENDING_TTL_MS = 2_500;
 const POOL_NAME = new Map<Pool, string>(Object.entries(POOLS).map(([name, pool]) => [pool as Pool, name]));
 
 /** Where a pool borrows from once all its own lines played in this flight (same mood only). */
-const HYPE: Pool = [...POOLS.early, ...POOLS.climb, ...POOLS.afterCash, ...POOLS.orbit];
+const HYPE: Pool = [...POOLS.early, ...POOLS.climb, ...POOLS.afterCash];
 const SCARY: Pool = [...POOLS.high, ...POOLS.space, ...HYPE];
 const SPILL = new Map<Pool, Pool>([
   [POOLS.early, HYPE],
@@ -222,7 +224,7 @@ export class KaarisDirector {
 
   // per flight
   private flightStartedAt = 0;
-  private orbitAt = 5;
+  private orbitAt = 3;
   private highAt = 8;
   private spaceAt = 16;
   private fired = new Set<string>();
@@ -267,6 +269,10 @@ export class KaarisDirector {
 
   /** Called every frame while flying. */
   tick(multiplier: number, cashedAt: number | null) {
+    if (this.once("orbit", multiplier >= this.orbitAt)) {
+      // Reaction priority: a cash-out or a crash during the orbit line must still get its own line.
+      return this.request(this.pick(POOLS.orbit), PRIORITY.reaction);
+    }
     if (cashedAt !== null) {
       if (this.once("regret", multiplier >= RULES.regret.min && multiplier >= cashedAt * RULES.regret.ratio)) {
         return this.request(this.pick(POOLS.regret), PRIORITY.big);
@@ -275,11 +281,6 @@ export class KaarisDirector {
         return this.request(this.pick(POOLS.farAway), PRIORITY.reaction);
       }
     } else {
-      if (this.once("orbit", multiplier >= this.orbitAt)) {
-        // Reaction priority: a cash-out or a crash during the orbit line must still get its own line.
-        const id = this.pick(POOLS.orbit);
-        return this.request(id, PRIORITY.reaction, id === "thomas-pesquet" ? "moon" : "normal");
-      }
       if (this.once("high", multiplier >= this.highAt)) return this.request(this.pick(POOLS.high), PRIORITY.reaction);
       if (this.once("space", multiplier >= this.spaceAt)) return this.request(this.pick(POOLS.space), PRIORITY.reaction);
     }
@@ -407,7 +408,7 @@ export class KaarisDirector {
   /** Plays now if the slot is free (or interrupts lower priority), otherwise queues or drops. */
   private request(id: string, priority: Priority, mode: Mode = "normal") {
     if (!id || !clipById(id)) return;
-    const req = { id, priority, mode };
+    const req: Request = { id, priority, mode: id === RULES.moonClip ? "moon" : mode };
     if (this.current) {
       if (priority > this.current.priority) return this.start(req);
       if (priority >= PRIORITY.reaction) this.keep(req);

@@ -45,7 +45,8 @@ test("landing: the splash unlocks audio, Kaaris intro plays, the managed wallet 
   player = await enter(page);
   await waitForClip(page, ["intro"], 15_000);
   expect(await usdc(player)).toBeGreaterThanOrEqual(1_000);
-  expect(await mon(player)).toBeGreaterThanOrEqual(0.1);
+  // 0.1 MON from the house, minus the gas of the wallet's own USDC faucet claim.
+  expect(await mon(player)).toBeGreaterThan(0.08);
   await expect(bet()).toBeEnabled();
   await expect(page.locator(".splash")).toHaveCount(0);
 });

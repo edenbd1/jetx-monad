@@ -13,7 +13,13 @@ Built at **Monad Blitz Paris** (19 September 2026).
 - **No wallet to connect.** The first visit creates a wallet in the browser; the house tops it up with gas (MON) and 1,000 test USDC.
 - **Two transactions per rocket.** `launch(bet)` when you tap BET (the bet is burned and the crash point drawn), then `cashOut(id, multiplier)` when you tap CASH OUT, or `settle(id)` once the rocket has blown up. Every flight is on-chain and linked to the explorer.
 - **Instant on Monad.** Transactions are signed in the browser with a pre-warmed nonce, fees and gas limit, and sent with `eth_sendRawTransactionSync`: one round trip returns the receipt, in about half a second.
-- **Kaaris reacts live.** A facecam bubble plays cuts from Kaaris's rocket-game ad depending on the flight: the intro on landing, "10 balles" on your bet, "ça monte bien comme il faut" on the way up, "Thomas Pesquet" past 5x, "je m'arrête à 6" or "bim bam boom" when you cash out, "putain" or "c'est grave la haine" when it crashes.
+- **Kaaris reacts live, with the French meme crew.** A facecam bubble plays short cuts depending on the flight:
+  - **start:** Kaaris only, "allez, je vais jouer 10 balles… c'est parti";
+  - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée" mid-flight, "Thomas Pesquet" past 5x, "on va tous mourir" at 12x, Les Visiteurs at 20x;
+  - **cash out:** Eléonore under 1.2x (ironic), "je m'arrête à 6", "bim bam boom", SCH or "je suis riche" past 10x;
+  - **after you cashed out:** "c'est grave la haine" as it keeps climbing, Jean Lassalle's "c'est pas fini ?" when it goes far;
+  - **crash:** Denis Brogniart's "Ah !" on a 1.00x bust, "premier crash remboursé", then putain / Nils / Macron, Taxi 2's "catastrophe" on big crashes;
+  - **idle / broke:** "laisse voler ton avion", Kaamelott, "swipe up", "c'est la hess".
 
 ## Game math
 
@@ -52,7 +58,7 @@ Measured on testnet: `launch` 160k gas (0.016 MON), `cashOut` 105k (0.011 MON), 
 ## Tests
 
 - `contracts/`: 13 Foundry tests, including an empirical check of the crash distribution and the 50x cap over 4,000 draws.
-- `e2e/`: 7 Playwright tests in an iPhone viewport against the live game on Monad Testnet: landing (intro clip + managed wallet funding), auto cash-out win, loss and settle, manual cash-out paid at the tapped multiplier, the Thomas Pesquet clip past 5x, reload keeping the wallet, and going broke then refilling. Every step is checked on-chain.
+- `e2e/`: 9 deterministic clip-engine tests in mock mode (one per reaction rule), and 7 Playwright tests in an iPhone viewport against the live game on Monad Testnet: landing (intro clip + managed wallet funding), auto cash-out win, loss and settle, manual cash-out paid at the tapped multiplier, the Thomas Pesquet clip past 5x, reload keeping the wallet, and going broke then refilling. Every step is checked on-chain.
 
 ```bash
 cd e2e && pnpm install
@@ -64,7 +70,7 @@ BASE_URL=https://jetx-monad.vercel.app npx playwright test
 ```
 contracts/   Foundry: src/JetX.sol, src/JetUSD.sol, tests (incl. distribution check), deploy script
 app/         Next.js mobile game: rocket canvas, bet panel, Kaaris clip engine, managed wallet, /api/fund
-app/public/kaaris/   24 reaction clips + clips.json (caption, trigger)
+app/public/kaaris/   38 reaction clips + clips.json (caption, trigger, speaker)
 e2e/         Playwright tests against the live game (phone viewport, on-chain assertions)
 docs/        Screenshots
 ```

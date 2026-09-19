@@ -911,6 +911,15 @@ input {
   filter: drop-shadow(0 0 22px rgba(255, 190, 80, 0.7));
 }
 .multiplier.pop { animation: pop-m 0.42s cubic-bezier(0.2, 1.6, 0.4, 1); }
+/* Once it blows up, the number goes red whatever altitude it reached. */
+.multiplier.is-crashed[data-tier] {
+  color: var(--red);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  filter: none;
+  text-shadow: 0 0 28px rgba(255, 77, 109, 0.6);
+}
 @keyframes pop-m {
   0% { transform: scale(1); }
   35% { transform: scale(1.28) rotate(-2deg); }

@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
   ]);
 
   const sent: Record<string, string> = {};
+  /** Block of the last funding tx: the client waits for Monad's 3-block delayed state to pass it. */
+  let block = 0;
   // Two concurrent fundings can race on the house nonce: retry once with a fresh one.
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -65,11 +67,12 @@ export async function POST(req: NextRequest) {
         );
         sent.usdc = hashes.at(-1)!;
       }
-      await Promise.all(hashes.map((hash) => client.waitForTransactionReceipt({ hash, pollingInterval: 150 })));
+      const receipts = await Promise.all(hashes.map((hash) => client.waitForTransactionReceipt({ hash, pollingInterval: 150 })));
+      block = Math.max(0, ...receipts.map((r) => Number(r.blockNumber)));
       break;
     } catch (e) {
       if (attempt === 1) return NextResponse.json({ error: String(e).slice(0, 200), sent }, { status: 502 });
     }
   }
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({ ok: true, sent, block });
 }

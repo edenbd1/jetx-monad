@@ -26,10 +26,19 @@ async function main() {
     if (String(url) !== "/api/fund") return realFetch(url, init);
     const { address } = JSON.parse(String(init!.body));
     const mon = await client.getBalance({ address });
-    if (mon < parseEther("0.05")) await client.waitForTransactionReceipt({ hash: await wallet.sendTransaction({ to: address, value: parseEther("0.2") }) });
-    const data = encodeFunctionData({ abi: jetxAbi, functionName: "grant", args: [address, BigInt(1000e6)] });
-    await client.waitForTransactionReceipt({ hash: await wallet.sendTransaction({ to: DEPLOYMENT.game, data }) });
-    return new Response(JSON.stringify({ ok: true }));
+    let block = 0;
+    if (mon < parseEther("0.05")) {
+      const r = await client.waitForTransactionReceipt({ hash: await wallet.sendTransaction({ to: address, value: parseEther("0.2") }) });
+      block = Number(r.blockNumber);
+    }
+    const { erc20Abi } = await import("../lib/abi");
+    const usdc = await client.readContract({ address: DEPLOYMENT.usd, abi: erc20Abi, functionName: "balanceOf", args: [address] });
+    if (usdc < BigInt(5e6)) {
+      const data = encodeFunctionData({ abi: jetxAbi, functionName: "grant", args: [address, BigInt(1000e6)] });
+      const r = await client.waitForTransactionReceipt({ hash: await wallet.sendTransaction({ to: DEPLOYMENT.game, data }) });
+      block = Math.max(block, Number(r.blockNumber));
+    }
+    return new Response(JSON.stringify({ ok: true, block }));
   }) as typeof fetch;
 
   const chain = createChain();
@@ -38,20 +47,24 @@ async function main() {
   if (balances.usdc < 1000 || balances.mon < 0.1) throw new Error("funding failed");
 
   let usdc = balances.usdc;
+  const sample: Record<string, `0x${string}`> = {};
   const times: number[] = [];
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < Number(process.env.FLIGHTS ?? 12); i++) {
     const flight = await chain.launch(10);
     times.push(flight.tx.confirmMs);
+    sample.launch = flight.tx.hash;
     usdc -= 10;
     const target = [1.01, 1.5, 2, 3][i % 4];
     if (flight.crash >= target) {
       const { payout, tx } = await chain.cashOut(flight, target);
       times.push(tx.confirmMs);
+      sample.cashOut = tx.hash;
       usdc += payout;
       console.log(`#${flight.id} crash ${flight.crash.toFixed(2)}x  cash out @${target}x  +${payout}`);
     } else {
       const { tx } = await chain.settle(flight);
       times.push(tx.confirmMs);
+      sample.settle = tx.hash;
       console.log(`#${flight.id} crash ${flight.crash.toFixed(2)}x  lost 10`);
     }
     const b = await chain.balances();
@@ -72,6 +85,11 @@ async function main() {
   const history = await chain.history();
   console.log("history", history.slice(0, 8).join(", "), `(${history.length})`);
   console.log(`tx confirm ms: median ${times.sort((x, y) => x - y)[times.length >> 1]}, max ${Math.max(...times)}`);
+  for (const [label, hash] of Object.entries(sample)) {
+    const r = await client.getTransactionReceipt({ hash });
+    const tx = await client.getTransaction({ hash });
+    console.log(`${label.padEnd(8)} gasUsed ${r.gasUsed} limit ${tx.gas} cost ${(Number(r.gasUsed * r.effectiveGasPrice) / 1e18).toFixed(4)} MON`);
+  }
   console.log("OK");
 }
 

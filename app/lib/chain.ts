@@ -74,19 +74,20 @@ export function createChain(): GameChain {
       getFees(),
       getNonce(),
     ]);
-    const raw = await account.signTransaction({
-      chainId: CHAIN.id,
-      type: "eip1559",
-      to: game,
-      data,
-      gas,
-      nonce: n,
-      maxFeePerGas: fee.maxFeePerGas,
-      maxPriorityFeePerGas: fee.maxPriorityFeePerGas,
-    });
     let receipt: RawReceipt;
     try {
-      receipt = await submit(raw);
+      receipt = await submitWhenFunded((bump) =>
+        account.signTransaction({
+          chainId: CHAIN.id,
+          type: "eip1559",
+          to: game,
+          data,
+          gas,
+          nonce: n,
+          maxFeePerGas: fee.maxFeePerGas + bump,
+          maxPriorityFeePerGas: fee.maxPriorityFeePerGas + bump,
+        }),
+      );
     } catch (e) {
       nonce = null; // resync on any failure (nonce race, dropped tx…)
       if (!fresh && /gas|out of gas/i.test(String(e))) return send(method, data, { fresh: true });
@@ -101,6 +102,31 @@ export function createChain(): GameChain {
       tx: { hash: receipt.transactionHash, confirmMs: Math.round(performance.now() - t0), block: Number(receipt.blockNumber) },
       receipt,
     };
+  }
+
+  /**
+   * Monad's consensus checks balances against state 3 blocks behind the tip (reserve balance rule),
+   * so a wallet funded a moment ago is briefly "empty". Nodes also cache a rejection per raw
+   * transaction, so each retry is re-signed with a 1-wei higher tip to be evaluated afresh.
+   */
+  async function submitWhenFunded(sign: (bump: bigint) => Promise<Hex>): Promise<RawReceipt> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await submit(await sign(BigInt(attempt)));
+      } catch (e) {
+        if (attempt >= 10 || !/insufficient balance/i.test(String(e))) throw e;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    }
+  }
+
+  /** Waits until the funding block is outside Monad's 3-block delayed-state window. */
+  async function settleFunding(block: number | undefined) {
+    if (!block) return;
+    for (let i = 0; i < 25; i++) {
+      if (Number(await client.getBlockNumber()) >= block + 4) return;
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
 
   async function submit(raw: Hex): Promise<RawReceipt> {
@@ -123,11 +149,13 @@ export function createChain(): GameChain {
   }
 
   async function fund() {
-    await fetch("/api/fund", {
+    const res = await fetch("/api/fund", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ address: account.address }),
     }).catch(() => undefined);
+    const body = (await res?.json().catch(() => ({}))) as { block?: number };
+    await settleFunding(body.block);
   }
 
   async function balances(): Promise<Balances> {

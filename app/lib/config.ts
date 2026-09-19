@@ -9,6 +9,11 @@ export type Deployment = { chainId: number; startBlock: number; house: Address; 
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || monadTestnet.id);
 export const CHAIN = CHAIN_ID === foundry.id ? foundry : monadTestnet;
 export const DEPLOYMENT = (CHAIN_ID === foundry.id ? local : monad) as Deployment;
-export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || CHAIN.rpcUrls.default.http[0];
+/**
+ * Monad Foundation's RPC. The default public endpoint (testnet-rpc.monad.xyz) rejects the first
+ * transactions of freshly funded accounts with "Signer had insufficient balance"; this one doesn't.
+ */
+const MONAD_RPC = "https://rpc-testnet.monadinfra.com";
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || (CHAIN.id === monadTestnet.id ? MONAD_RPC : CHAIN.rpcUrls.default.http[0]);
 export const EXPLORER_URL = "https://testnet.monadexplorer.com";
 export const USDC_DECIMALS = 6;

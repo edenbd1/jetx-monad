@@ -22,35 +22,41 @@ type Threshold = { at: number; clips: string[]; priority: Priority; mode?: Mode 
 export const CLIMB: Threshold[] = [
   { at: 1.3, clips: ["jusquau-ciel"], priority: PRIORITY.ambient },
   { at: 1.8, clips: ["monte-monte", "allez-ca-monte"], priority: PRIORITY.ambient },
+  { at: 2.2, clips: ["ma-fusee"], priority: PRIORITY.reaction },
   { at: 2.5, clips: ["cest-bon-ca"], priority: PRIORITY.ambient },
   { at: 3.2, clips: ["monte-bien"], priority: PRIORITY.ambient },
   { at: 4, clips: ["je-vais-monter"], priority: PRIORITY.ambient },
   { at: 5, clips: ["thomas-pesquet"], priority: PRIORITY.big, mode: "moon" },
   { at: 7, clips: ["ah-gars"], priority: PRIORITY.reaction },
   { at: 9, clips: ["avant-quil-explose"], priority: PRIORITY.reaction },
+  { at: 12, clips: ["tous-mourir"], priority: PRIORITY.reaction },
   { at: 15, clips: ["laisse-voler"], priority: PRIORITY.reaction },
+  { at: 20, clips: ["visiteurs"], priority: PRIORITY.reaction },
 ];
 
 export const RULES = {
   intro: "intro",
-  firstBet: ["dix-balles", "tres-simple"],
-  bet: "dix-balles",
-  betChance: 0.4,
-  launch: ["cest-parti", "ma-fusee", "celle-la-bonne"],
-  /** Cash-out reactions: the "je m'arrête à 6" window, then big / small wins. */
+  /** Every flight starts with Kaaris: "Allez, je vais jouer 10 balles… C'est parti". */
+  bet: "depart",
+  /** Cash-out reactions, checked in this order. */
   cashOutSix: { clip: "je-marrete-a-6", from: 5.5, to: 6.5 },
+  cashOutHuge: { clips: ["sch-incroyable", "je-suis-riche"], from: 10 },
   cashOutBig: { clip: "bim-bam-boom", from: 2 },
+  cashOutTiny: { clips: ["eleonore"], below: 1.2 },
   cashOutSmall: "vas-y-vas-y",
-  /** Regret: the rocket keeps going after you cashed out. */
+  /** After you cashed out: the rocket keeps going (regret), then keeps going far (Lassalle). */
   regret: { clip: "la-haine", ratio: 1.5, min: 3 },
+  stillFlying: { clip: "pas-fini", ratio: 3, min: 6 },
+  /** Crashes with the player on board, checked in this order. */
+  instantBust: "brogniart-ah",
   firstCrash: "crash-rembourse",
-  bigCrash: { clip: "la-haine", from: 5 },
-  crash: "putain",
+  bigCrash: { clips: ["la-haine", "catastrophe"], from: 5 },
+  crash: ["putain", "bravo-nils", "macron-explosion"],
   retry: ["on-recommence", "pas-grave"],
   retryDelayMs: 1_200,
-  idle: "laisse-voler",
+  idle: ["laisse-voler", "pas-faux"],
   idleMs: 20_000,
-  broke: "swipe-up",
+  broke: ["swipe-up", "la-hess"],
   climbCooldownMs: 1_500,
 } as const;
 
@@ -76,8 +82,7 @@ export class KaarisDirector {
   private token = 0;
   private fired = new Set<number>();
   private regretFired = false;
-  private bets = 0;
-  private launches = 0;
+  private stillFlyingFired = false;
   private crashes = 0;
   private retries = 0;
   private followUp: ReturnType<typeof setTimeout> | null = null;
@@ -91,22 +96,15 @@ export class KaarisDirector {
   }
 
   bet() {
-    this.bets += 1;
-    if (this.bets === 1) {
-      this.request(RULES.firstBet[0], PRIORITY.reaction);
-      this.enqueue(RULES.firstBet[1], PRIORITY.reaction);
-    } else if (Math.random() < RULES.betChance) {
-      this.request(RULES.bet, PRIORITY.reaction);
-    }
+    this.request(RULES.bet, PRIORITY.reaction);
   }
 
   launched() {
+    // The bet line already says "c'est parti": the launch itself stays quiet.
     this.fired.clear();
     this.regretFired = false;
+    this.stillFlyingFired = false;
     this.cancelFollowUp();
-    const id = RULES.launch[this.launches % RULES.launch.length];
-    this.launches += 1;
-    this.request(id, PRIORITY.reaction);
   }
 
   /** Called every frame while flying. */
@@ -114,6 +112,12 @@ export class KaarisDirector {
     if (cashedAt !== null && !this.regretFired && multiplier >= RULES.regret.min && multiplier >= cashedAt * RULES.regret.ratio) {
       this.regretFired = true;
       this.request(RULES.regret.clip, PRIORITY.big);
+      return;
+    }
+    const far = RULES.stillFlying;
+    if (cashedAt !== null && !this.stillFlyingFired && multiplier >= far.min && multiplier >= cashedAt * far.ratio) {
+      this.stillFlyingFired = true;
+      this.request(far.clip, PRIORITY.reaction);
       return;
     }
     // Only the highest newly crossed threshold fires (fast flights skip the smaller ones).
@@ -130,7 +134,9 @@ export class KaarisDirector {
   cashedOut(multiplier: number) {
     const six = RULES.cashOutSix;
     if (multiplier >= six.from && multiplier <= six.to) this.request(six.clip, PRIORITY.big);
+    else if (multiplier >= RULES.cashOutHuge.from) this.request(RULES.cashOutHuge.clips, PRIORITY.big);
     else if (multiplier >= RULES.cashOutBig.from) this.request(RULES.cashOutBig.clip, PRIORITY.big);
+    else if (multiplier < RULES.cashOutTiny.below) this.request(RULES.cashOutTiny.clips, PRIORITY.big);
     else this.request(RULES.cashOutSmall, PRIORITY.big);
   }
 
@@ -138,8 +144,9 @@ export class KaarisDirector {
   crashed(crash: number, playerIn: boolean) {
     if (!playerIn) return;
     this.crashes += 1;
-    if (this.crashes === 1) this.request(RULES.firstCrash, PRIORITY.big);
-    else if (crash >= RULES.bigCrash.from) this.request(RULES.bigCrash.clip, PRIORITY.big);
+    if (crash <= 1) this.request(RULES.instantBust, PRIORITY.big);
+    else if (this.crashes === 1) this.request(RULES.firstCrash, PRIORITY.big);
+    else if (crash >= RULES.bigCrash.from) this.request(RULES.bigCrash.clips, PRIORITY.big);
     else this.request(RULES.crash, PRIORITY.big);
     this.cancelFollowUp();
     this.followUp = setTimeout(() => {

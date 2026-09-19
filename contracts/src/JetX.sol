@@ -9,8 +9,8 @@ import {JetUSD} from "./JetUSD.sol";
 ///         `launch` (bet burned, crash point drawn) and either `cashOut` at the multiplier the
 ///         player stopped at, or `settle` once the rocket blew up.
 /// @dev Multipliers are fixed-point x100 (250 = 2.50x). The crash point follows the classic
-///      crash-game distribution P(crash >= x) = 0.97 / x (3% house edge, 3% instant busts),
-///      capped at `maxMultiplier` (50x by default).
+///      crash-game curve P(base >= x) = rtp / x, stretched above 1x by `boost` for a more
+///      generous testnet game (defaults: 1.5% instant busts, median ~2.45x), capped at `maxMultiplier`.
 ///      Randomness comes from block data at launch: fine for a testnet game with test dollars,
 ///      a production version would use a VRF or a commit-reveal house seed.
 contract JetX is Ownable {
@@ -21,7 +21,11 @@ contract JetX is Ownable {
     /// @notice Hard bounds for the house-set cap on crash points (2x .. 1000x).
     uint32 public constant MIN_CAP = 200;
     uint32 public constant MAX_CAP = 100_000;
-    uint256 public constant RTP_BPS = 9_700; // 97% return to player
+    /// @notice Bounds for the house-tuned curve (see `setCurve`).
+    uint16 public constant MIN_RTP_BPS = 9_000;
+    uint16 public constant MAX_RTP_BPS = 10_000;
+    uint16 public constant MIN_BOOST_BPS = 10_000;
+    uint16 public constant MAX_BOOST_BPS = 30_000;
     uint256 public constant ABANDON_AFTER = 1 hours;
     uint256 public constant HISTORY = 20;
 
@@ -52,6 +56,10 @@ contract JetX is Ownable {
 
     /// @notice Crash points are capped here (x100). Starts at 50x.
     uint32 public maxMultiplier = 5_000;
+    /// @notice Base curve P(crash >= x) = rtp / x; below 1.00x is an instant bust (1 - rtp of flights).
+    uint16 public rtpBps = 9_850;
+    /// @notice Stretches every flight above 1x: crash = 1 + (base - 1) * boost. 15000 = 1.5x.
+    uint16 public boostBps = 15_000;
 
     uint256 public totalWagered;
     uint256 public totalPaid;
@@ -63,6 +71,7 @@ contract JetX is Ownable {
     event Crashed(uint256 indexed id, address indexed player, uint256 bet, uint32 crash);
     event Faucet(address indexed player, uint256 amount);
     event MaxMultiplierSet(uint32 maxMultiplier);
+    event CurveSet(uint16 rtpBps, uint16 boostBps);
 
     error BadBet();
     error NotYourRound();
@@ -72,6 +81,7 @@ contract JetX is Ownable {
     error StillFlying();
     error NotBroke();
     error BadCap();
+    error BadCurve();
 
     constructor(address owner_) Ownable(owner_) {
         usd = new JetUSD(address(this));
@@ -141,6 +151,14 @@ contract JetX is Ownable {
         emit MaxMultiplierSet(cap);
     }
 
+    /// @notice Tunes how generous flights are, within fixed bounds.
+    function setCurve(uint16 rtp, uint16 boost) external onlyOwner {
+        if (rtp < MIN_RTP_BPS || rtp > MAX_RTP_BPS || boost < MIN_BOOST_BPS || boost > MAX_BOOST_BPS) revert BadCurve();
+        rtpBps = rtp;
+        boostBps = boost;
+        emit CurveSet(rtp, boost);
+    }
+
     /// @notice Lets the house top up players it onboards (managed wallets).
     function grant(address to, uint256 amount) external onlyOwner {
         usd.mint(to, amount);
@@ -177,13 +195,16 @@ contract JetX is Ownable {
         ++_recentCount;
     }
 
-    /// @dev P(crash >= x) = 0.97 / x; results below 1.00x are instant busts at 1.00x.
+    /// @dev Base draw P(base >= x) = rtp / x (below 1.00x: instant bust), then the part above 1x is
+    ///      stretched by `boost`: P(crash >= x) = rtp / (1 + (x - 1) / boost). Capped at `maxMultiplier`.
     function _drawCrash(uint256 id) internal view returns (uint32) {
         uint256 r = uint256(
             keccak256(abi.encode(block.prevrandao, blockhash(block.number - 1), block.timestamp, msg.sender, id))
         ) % 1e6;
-        uint256 crash = RTP_BPS * 1e4 / (1e6 - r); // x100
-        if (crash < 100) crash = 100;
+        uint256 base = uint256(rtpBps) * 1e6 / (1e6 - r); // x10000, finer than the x100 result
+        if (base <= 10_000) return 100; // instant bust
+        // Round the boosted part up so only real busts land on 1.00x.
+        uint256 crash = 100 + ((base - 10_000) * boostBps / 10_000 + 99) / 100;
         if (crash > maxMultiplier) crash = maxMultiplier;
         return uint32(crash);
     }

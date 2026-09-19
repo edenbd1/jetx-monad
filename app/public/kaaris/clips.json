@@ -398,5 +398,125 @@
   "caption": "C'est rigolo hein !!",
   "trigger": "crash",
   "speaker": "Morning Live"
+ },
+ {
+  "id": "maillon-faible",
+  "src": "/kaaris/maillon-faible.mp4",
+  "duration": 2.83,
+  "caption": "Vous êtes le maillon faible. Au revoir ! 👋",
+  "trigger": "crash",
+  "speaker": "Le Maillon faible"
+ },
+ {
+  "id": "sentence-irrevocable",
+  "src": "/kaaris/sentence-irrevocable.mp4",
+  "duration": 3.13,
+  "caption": "Et leur sentence est irrévocable. 🔥",
+  "trigger": "crash",
+  "speaker": "Denis Brogniart"
+ },
+ {
+  "id": "monde-de-merde",
+  "src": "/kaaris/monde-de-merde.mp4",
+  "duration": 1.37,
+  "caption": "Monde de merde ! 💀",
+  "trigger": "crash",
+  "speaker": "La Classe américaine"
+ },
+ {
+  "id": "coffe-merde",
+  "src": "/kaaris/coffe-merde.mp4",
+  "duration": 2.27,
+  "caption": "Mais c'est de la merde ! 💩",
+  "trigger": "crash",
+  "speaker": "Jean-Pierre Coffe"
+ },
+ {
+  "id": "au-revoir",
+  "src": "/kaaris/au-revoir.mp4",
+  "duration": 1.0,
+  "caption": "Au revoir. 🫡",
+  "trigger": "crash",
+  "speaker": "Giscard"
+ },
+ {
+  "id": "houston",
+  "src": "/kaaris/houston.mp4",
+  "duration": 1.33,
+  "caption": "Houston, on a un problème. 🚀💥",
+  "trigger": "crash",
+  "speaker": "Apollo 13"
+ },
+ {
+  "id": "etchebest",
+  "src": "/kaaris/etchebest.mp4",
+  "duration": 1.67,
+  "caption": "On est tous dans la merde ! 😱",
+  "trigger": "crash",
+  "speaker": "Etchebest"
+ },
+ {
+  "id": "cest-cela-oui",
+  "src": "/kaaris/cest-cela-oui.mp4",
+  "duration": 2.2,
+  "caption": "C'est cela, oui, oui, oui… 🙄",
+  "trigger": "crash",
+  "speaker": "Le Père Noël est une ordure"
+ },
+ {
+  "id": "malentendu",
+  "src": "/kaaris/malentendu.mp4",
+  "duration": 2.27,
+  "caption": "On sait jamais, sur un malentendu, ça peut marcher 🤞",
+  "trigger": "retry",
+  "speaker": "Les Bronzés"
+ },
+ {
+  "id": "pas-de-bras",
+  "src": "/kaaris/pas-de-bras.mp4",
+  "duration": 1.0,
+  "caption": "Pas de bras, pas de chocolat 🍫",
+  "trigger": "crash",
+  "speaker": "Intouchables"
+ },
+ {
+  "id": "visiteurs-binz",
+  "src": "/kaaris/visiteurs-binz.mp4",
+  "duration": 1.73,
+  "caption": "Mais qu'est-ce que c'est que ce binz ?! 😵",
+  "trigger": "crash",
+  "speaker": "Les Visiteurs"
+ },
+ {
+  "id": "dernier-mot",
+  "src": "/kaaris/dernier-mot.mp4",
+  "duration": 1.22,
+  "caption": "Est-ce que c'est votre dernier mot ? 🤔",
+  "trigger": "tension",
+  "speaker": "Jean-Pierre Foucault"
+ },
+ {
+  "id": "okay",
+  "src": "/kaaris/okay.mp4",
+  "duration": 1.33,
+  "caption": "Okayyy ! 😁",
+  "trigger": "climb",
+  "speaker": "Les Visiteurs"
+ },
+ {
+  "id": "jcvd",
+  "src": "/kaaris/jcvd.mp4",
+  "duration": 2.97,
+  "caption": "Moi je suis aware, tu vois… je suis aware 🧘",
+  "trigger": "climb",
+  "speaker": "JCVD"
+ },
+ {
+  "id": "bonne-situation",
+  "src": "/kaaris/bonne-situation.mp4",
+  "duration": 4.0,
+  "caption": "Moi je crois pas qu'il y ait de bonne ou de mauvaise situation 📜",
+  "trigger": "idle",
+  "speaker": "Otis"
  }
 ]

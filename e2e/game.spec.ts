@@ -5,6 +5,7 @@ import {
   BROKE_CLIPS,
   CASHOUT_CLIPS,
   clips,
+  clipsAt,
   CRASH_CLIPS,
   enter,
   launch,
@@ -143,10 +144,11 @@ test("the orbit moment (4.5x-6x) plays a space line, Thomas Pesquet with his ban
       await waitForNextRound(page);
       continue;
     }
-    const seen = (await clips(page)).length;
-    await expect.poll(async () => (await clips(page)).slice(seen).some((c) => ORBIT_CLIPS.includes(c)), { timeout: 45_000 }).toBe(true);
-    expect(await shownMultiplier(page)).toBeGreaterThanOrEqual(4.5);
-    if ((await clips(page)).slice(seen).includes("thomas-pesquet")) {
+    // "infini" and "laisse-voler" also play elsewhere: the orbit slot is the one past 4.5x.
+    const seen = (await clipsAt(page)).length;
+    const orbit = async () => (await clipsAt(page)).slice(seen).find((c) => ORBIT_CLIPS.includes(c.id) && c.m >= 4.5);
+    await expect.poll(async () => !!(await orbit()), { timeout: 60_000 }).toBe(true);
+    if ((await orbit())?.id === "thomas-pesquet") {
       await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
     }
     await cash().tap();

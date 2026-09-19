@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KaarisCam, type KaarisCamHandle } from "@/components/KaarisCam";
+import { Leaderboard } from "@/components/Leaderboard";
 import { Sky, type Scene } from "@/components/Sky";
 import { getChain } from "@/lib/get-chain";
 import { msToReach, multiplierAt, toX100, type Address, type Balances, type Flight, type GameChain, type TxInfo } from "@/lib/game-types";
@@ -60,6 +61,7 @@ export function Game() {
   const [fx, setFx] = useState<Fx | null>(null);
   const [flash, setFlash] = useState<Flash | null>(null);
   const [shake, setShake] = useState<"soft" | "hard" | null>(null);
+  const [board, setBoard] = useState(false);
   const fxKey = useRef(0);
 
   const scene = useRef<Scene>({ phase: "idle", startedAt: 0, crash: 1, crashedAt: 0, cashedAt: null });
@@ -439,6 +441,9 @@ export function Game() {
                 FUSÉE<span>MONAD</span>
               </div>
               <div className="topbar-right">
+                <button className="trophy" onClick={() => setBoard(true)} disabled={round === "flying"} aria-label="Leaderboard">
+                  🏆
+                </button>
                 <button className="mute" onClick={toggleMute} aria-label={muted ? "Unmute Kaaris" : "Mute Kaaris"}>
                   {muted ? "🔇" : "🔊"}
                 </button>
@@ -450,7 +455,8 @@ export function Game() {
                 >
                   <span className="wallet-usd num">{bal ? usd(bal.usdc) : "—"}</span>
                   <span className="wallet-meta">
-                    <i className="gas" /> {bal ? `${bal.mon.toFixed(3)} MON` : "…"} · {address ? short(address) : "wallet…"}
+                    <i className="gas" /> {bal ? `${bal.mon.toFixed(3)} MON` : "…"}
+                    <span className="wallet-addr">· {address ? short(address) : "wallet…"}</span>
                   </span>
                 </a>
               </div>
@@ -582,6 +588,8 @@ export function Game() {
             </section>
           </>
         )}
+
+        {board && <Leaderboard me={address} onClose={() => setBoard(false)} />}
 
         <KaarisCam ref={cam} muted={muted} onMode={setCamMode} />
 

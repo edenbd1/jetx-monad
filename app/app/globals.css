@@ -195,7 +195,7 @@ input {
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mute {
@@ -229,6 +229,15 @@ input {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
+}
+
+/* Small phones: the balance and the buttons first. */
+@media (max-width: 370px) {
+  .wallet-addr,
+  .topbar .brand span {
+    display: none;
+  }
 }
 
 .gas {
@@ -1067,3 +1076,175 @@ input {
   100% { transform: none; }
 }
 .phone[data-cam="boom"] .multiplier { font-size: 40px; }
+
+/* ------------------------------------------------------------------ leaderboard */
+
+.trophy {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: var(--panel-2);
+  font-size: 16px;
+}
+
+.trophy:disabled {
+  opacity: 0.45;
+}
+
+.lb {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 12px) 14px calc(var(--safe-bottom) + 12px);
+  background: radial-gradient(700px 420px at 50% 0%, #2a2378 0%, #0a0c2e 60%) , var(--bg);
+  animation: pop 0.2s ease-out;
+}
+
+.lb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.lb-head b {
+  display: block;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.lb-head small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.lb-close {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--panel-2);
+  font-size: 16px;
+}
+
+.lb-record,
+.lb-me {
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.lb-record {
+  background: rgba(255, 200, 61, 0.12);
+  border: 1px solid rgba(255, 200, 61, 0.35);
+}
+
+.lb-record b {
+  color: var(--yellow);
+}
+
+.lb-me {
+  background: rgba(31, 214, 127, 0.1);
+  border: 1px solid rgba(31, 214, 127, 0.35);
+}
+
+.lb-empty {
+  margin-top: 30px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.lb-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.lb-row.is-me {
+  border-color: var(--green);
+  box-shadow: 0 0 16px rgba(31, 214, 127, 0.25);
+}
+
+.lb-podium-1 {
+  background: linear-gradient(90deg, rgba(255, 200, 61, 0.22), var(--panel));
+}
+
+.lb-podium-2 {
+  background: linear-gradient(90deg, rgba(200, 210, 255, 0.16), var(--panel));
+}
+
+.lb-podium-3 {
+  background: linear-gradient(90deg, rgba(222, 140, 80, 0.18), var(--panel));
+}
+
+.lb-rank {
+  font-weight: 900;
+  font-size: 15px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.lb-podium .lb-rank {
+  font-size: 20px;
+}
+
+.lb-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lb-name b {
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-name em {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--green);
+  color: #04120a;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.lb-name small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lb-usd {
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.lb-podium-1 .lb-usd {
+  color: var(--yellow);
+}

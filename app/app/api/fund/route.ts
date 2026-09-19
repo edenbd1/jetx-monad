@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   createPublicClient,
+  encodeFunctionData,
   fallback,
   formatEther,
   http,
   isAddress,
   keccak256,
+  parseAbi,
   parseEther,
   type Address,
   type Hash,
@@ -13,7 +15,7 @@ import {
   type PublicClient,
 } from "viem";
 import { privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts";
-import { CHAIN, RPC_URLS } from "@/lib/config";
+import { CHAIN, DEPLOYMENT, RPC_URLS } from "@/lib/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,17 +23,24 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Gas sponsorship for managed wallets: players get 0.1 MON (~4 flights) when they drop below
- * 0.04 MON. USDC is claimed by the wallet itself (JetX.faucet), so this route sends one plain
- * transfer per player and nothing else.
+ * Gas sponsorship for managed wallets: players get 0.2 MON (~6 flights) when they drop below
+ * 0.09 MON. USDC is claimed by the wallet itself (JetX.faucet). Concurrent arrivals are batched
+ * into one GasSponsor.sponsor() call, so a burst costs a couple of house nonces, not one each.
  *
  * Monad reserve-balance rule: an account holding less than 10 MON may send only one value
  * transfer per 3 blocks (later ones revert and still burn gas). Above 10 MON it can send
  * back-to-back as long as it stays above 10 MON. So the house funds everyone from one key and
  * must be kept above 10 MON; below that it falls back to one transfer per 4 blocks.
  */
-const MIN_MON = parseEther("0.04");
-const TOPUP_MON = parseEther("0.1");
+/**
+ * Top up below 0.09 MON: Monad reserves gas_limit x max_fee for every in-flight tx, and a launch
+ * plus its cash-out reserve ~0.04 MON together, so 0.04 was too tight by the third flight.
+ */
+const MIN_MON = parseEther("0.09");
+const TOPUP_MON = parseEther("0.2");
+/** Arrivals within this window share one sponsor transaction (one nonce for up to MAX_BATCH players). */
+const BATCH_WINDOW_MS = 250;
+const MAX_BATCH = 30;
 const RESERVE = parseEther("10");
 const TRANSFER_GAS = BigInt(21_000);
 
@@ -42,6 +51,8 @@ const MAX_PER_IP = 600;
 
 type Result = { ok: true; sent: { mon?: Hash }; block: number } | { ok: false; error: string };
 
+type Waiter = { player: Address; resolve: (hash: Hash) => void; reject: (e: unknown) => void };
+
 type HouseState = {
   account: PrivateKeyAccount;
   client: PublicClient;
@@ -51,6 +62,8 @@ type HouseState = {
   lastSentBlock: number;
   fees: { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint; at: number } | null;
   balance: { value: bigint; at: number } | null;
+  batch: Waiter[];
+  timer: ReturnType<typeof setTimeout> | null;
 };
 
 // Module state survives across requests on a warm instance (dev server, Vercel fluid compute).
@@ -82,6 +95,8 @@ function house(key: Hex): HouseState {
       lastSentBlock: 0,
       fees: null,
       balance: null,
+      batch: [],
+      timer: null,
     };
   }
   return g.__jetxHouse;
@@ -127,15 +142,19 @@ async function broadcast(h: HouseState, raw: Hex): Promise<Hash> {
   throw last;
 }
 
-/** Signs and broadcasts one top-up with the next house nonce. Returns once a node accepted it. */
-function sendTopUp(h: HouseState, to: Address): Promise<Hash> {
+const sponsorAbi = parseAbi(["function sponsor(address[] players, uint256 each) payable"]);
+
+/** Signs and broadcasts one sponsor() call for `players` with the next house nonce. */
+function sendBatch(h: HouseState, players: Address[]): Promise<Hash> {
   return serial(h, async () => {
+    const value = TOPUP_MON * BigInt(players.length);
+    const data = encodeFunctionData({ abi: sponsorAbi, functionName: "sponsor", args: [players, TOPUP_MON] });
     for (let attempt = 0; ; attempt++) {
       try {
         if (h.nonce === null) h.nonce = await h.client.getTransactionCount({ address: h.account.address, blockTag: "pending" });
         // Below the 10 MON reserve the house may only send one value transfer per 3 blocks.
         const balance = await houseBalance(h);
-        const paced = balance < RESERVE + TOPUP_MON * BigInt(2);
+        const paced = balance < RESERVE + value * BigInt(2);
         if (paced) {
           for (let i = 0; i < 30; i++) {
             if (Number(await h.client.getBlockNumber()) >= h.lastSentBlock + 4) break;
@@ -143,20 +162,21 @@ function sendTopUp(h: HouseState, to: Address): Promise<Hash> {
           }
         }
         const f = await fees(h);
+        const gas = await h.client.estimateGas({ account: h.account.address, to: DEPLOYMENT.sponsor, data, value });
         const raw = await h.account.signTransaction({
           chainId: CHAIN.id,
           type: "eip1559",
-          to,
-          value: TOPUP_MON,
-          gas: TRANSFER_GAS,
+          to: DEPLOYMENT.sponsor,
+          data,
+          value,
+          gas: (gas * BigInt(11)) / BigInt(10),
           nonce: h.nonce,
           maxFeePerGas: f.maxFeePerGas,
           maxPriorityFeePerGas: f.maxPriorityFeePerGas,
         });
         const hash = await broadcast(h, raw);
         h.nonce += 1;
-        if (h.balance) h.balance.value -= TOPUP_MON;
-        // Only paced mode needs the block of the last send; keep the fast path to one round trip.
+        if (h.balance) h.balance.value -= value;
         if (paced) h.lastSentBlock = Number(await h.client.getBlockNumber().catch(() => BigInt(h.lastSentBlock)));
         return hash;
       } catch (e) {
@@ -168,16 +188,38 @@ function sendTopUp(h: HouseState, to: Address): Promise<Hash> {
   });
 }
 
+/** Queues a player into the next sponsor() batch; resolves with that batch's tx hash. */
+function enqueue(h: HouseState, player: Address): Promise<Hash> {
+  return new Promise((resolve, reject) => {
+    h.batch.push({ player, resolve, reject });
+    const flush = () => {
+      if (h.timer) clearTimeout(h.timer);
+      h.timer = null;
+      const waiters = h.batch.splice(0, MAX_BATCH);
+      if (h.batch.length) h.timer = setTimeout(flush, 0);
+      sendBatch(
+        h,
+        waiters.map((w) => w.player),
+      ).then(
+        (hash) => waiters.forEach((w) => w.resolve(hash)),
+        (e) => waiters.forEach((w) => w.reject(e)),
+      );
+    };
+    if (h.batch.length >= MAX_BATCH) flush();
+    else if (!h.timer) h.timer = setTimeout(flush, BATCH_WINDOW_MS);
+  });
+}
+
 async function fund(h: HouseState, player: Address): Promise<Result> {
   const mon = await h.client.getBalance({ address: player });
   if (mon >= MIN_MON) return { ok: true, sent: {}, block: 0 };
   let error = "top-up kept reverting";
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const hash = await sendTopUp(h, player);
+      const hash = await enqueue(h, player);
       const receipt = await h.client.waitForTransactionReceipt({ hash, pollingInterval: 150, timeout: 30_000 });
       if (receipt.status === "success") return { ok: true, sent: { mon: hash }, block: Number(receipt.blockNumber) };
-      // A reverted top-up (reserve rule) still consumed a nonce: just go again.
+      // A reverted batch (reserve rule) still consumed a nonce: just go again.
     } catch (e) {
       error = String(e).slice(0, 200);
     }

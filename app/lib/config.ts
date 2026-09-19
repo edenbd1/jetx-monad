@@ -3,7 +3,7 @@ import type { Address } from "./game-types";
 import local from "./deployments/31337.json";
 import monad from "./deployments/10143.json";
 
-export type Deployment = { chainId: number; startBlock: number; house: Address; usd: Address; game: Address };
+export type Deployment = { chainId: number; startBlock: number; house: Address; usd: Address; game: Address; sponsor: Address };
 
 /** NEXT_PUBLIC_CHAIN_ID=31337 runs against a local anvil; default is Monad Testnet. */
 export const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || monadTestnet.id);

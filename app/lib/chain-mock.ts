@@ -82,12 +82,11 @@ function forcedCrash() {
   return Math.floor(v * 100) / 100;
 }
 
-/** P(crash >= x) = 0.97 / x, floored to 2 decimals like the contract. */
-/** Same curve as JetX: base = 0.985 / x (1.5% busts), stretched 1.5x above 1x, capped at 50x. */
+/** Same curve as the live JetX (setCurve(9900, 25000)): base = 0.99 / x (1% busts), stretched 2.5x above 1x, capped at 50x. */
 function drawCrash() {
   const r = Math.floor(Math.random() * 1e6);
-  const base = Math.floor((9_850 * 1e6) / (1e6 - r));
+  const base = Math.floor((9_900 * 1e6) / (1e6 - r));
   if (base <= 10_000) return 1;
-  const x100 = Math.min(5_000, 100 + Math.floor(((base - 10_000) * 15_000) / 10_000 / 100 + 0.99));
+  const x100 = Math.min(5_000, 100 + Math.floor(((base - 10_000) * 25_000) / 10_000 / 100 + 0.99));
   return x100 / 100;
 }

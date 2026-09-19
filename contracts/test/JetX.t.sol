@@ -169,34 +169,50 @@ contract JetXTest is Test {
     }
 
     /// Empirical check of the boosted curve P(crash >= x) = 0.985 / (1 + (x - 1) / 1.5).
-    function test_crashDistribution() public {
+    /// @dev Share of 4000 flights (per mille) reaching 2x, 5x, 10x, busting at 1.00x and hitting the cap.
+    function _distribution() internal returns (uint256[5] memory permille) {
         vm.prank(house);
         game.grant(alice, 100_000e6);
         uint256 n = 4000;
-        uint256 atLeast2;
-        uint256 atLeast5;
-        uint256 atLeast10;
-        uint256 instant;
-        uint256 capped;
         for (uint256 i; i < n; ++i) {
             vm.roll(block.number + 1);
             vm.prevrandao(bytes32(i * 7919 + 1));
             (uint256 id, uint32 crash) = _launch(alice, 1e6);
-            if (crash >= 200) ++atLeast2;
-            if (crash >= 500) ++atLeast5;
-            if (crash >= 1000) ++atLeast10;
-            if (crash == 100) ++instant;
+            if (crash >= 200) ++permille[0];
+            if (crash >= 500) ++permille[1];
+            if (crash >= 1000) ++permille[2];
+            if (crash == 100) ++permille[3];
             assertLe(crash, 5_000, "above the 50x cap");
-            if (crash == 5_000) ++capped;
+            if (crash == 5_000) ++permille[4];
             vm.prank(alice);
             game.settle(id);
         }
+        for (uint256 k; k < 5; ++k) {
+            permille[k] = permille[k] * 1000 / n;
+        }
+    }
+
+    function test_crashDistribution() public {
+        uint256[5] memory d = _distribution();
         // Expected: 59.1% >= 2x, 26.9% >= 5x, 14.1% >= 10x, 1.5% instant busts, 2.9% on the 50x cap.
-        assertApproxEqAbs(atLeast2 * 1000 / n, 591, 30);
-        assertApproxEqAbs(atLeast5 * 1000 / n, 269, 25);
-        assertApproxEqAbs(atLeast10 * 1000 / n, 141, 20);
-        assertApproxEqAbs(instant * 1000 / n, 15, 8);
-        assertApproxEqAbs(capped * 1000 / n, 29, 10);
+        assertApproxEqAbs(d[0], 591, 30);
+        assertApproxEqAbs(d[1], 269, 25);
+        assertApproxEqAbs(d[2], 141, 20);
+        assertApproxEqAbs(d[3], 15, 8);
+        assertApproxEqAbs(d[4], 29, 10);
+    }
+
+    /// @notice The curve the live testnet game runs: setCurve(9900, 25000).
+    function test_liveCurveDistribution() public {
+        vm.prank(house);
+        game.setCurve(9_900, 25_000);
+        uint256[5] memory d = _distribution();
+        // Expected: 70.7% >= 2x, 38.1% >= 5x, 21.5% >= 10x, 1% instant busts, 4.8% on the 50x cap.
+        assertApproxEqAbs(d[0], 707, 30);
+        assertApproxEqAbs(d[1], 381, 25);
+        assertApproxEqAbs(d[2], 215, 20);
+        assertApproxEqAbs(d[3], 10, 7);
+        assertApproxEqAbs(d[4], 48, 12);
     }
 
     function test_houseCanTuneTheCurveWithinBounds() public {

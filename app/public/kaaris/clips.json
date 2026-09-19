@@ -4,167 +4,199 @@
   "src": "/kaaris/intro.mp4",
   "duration": 5.3,
   "caption": "Le jeu qui rend tout le monde paro… le jeu de la fusée",
-  "trigger": "landing"
+  "trigger": "landing",
+  "speaker": "Kaaris"
  },
  {
   "id": "dix-balles",
   "src": "/kaaris/dix-balles.mp4",
   "duration": 1.53,
   "caption": "Allez, je vais jouer 10 balles",
-  "trigger": "bet"
+  "trigger": "bet",
+  "speaker": "Kaaris"
  },
  {
   "id": "cest-parti",
   "src": "/kaaris/cest-parti.mp4",
   "duration": 1.17,
   "caption": "C'est parti",
-  "trigger": "launch"
+  "trigger": "launch",
+  "speaker": "Kaaris"
  },
  {
   "id": "celle-la-bonne",
   "src": "/kaaris/celle-la-bonne.mp4",
   "duration": 2.8,
   "caption": "Celle-là, c'est la bonne",
-  "trigger": "launch"
+  "trigger": "launch",
+  "speaker": "Kaaris"
  },
  {
   "id": "jusquau-ciel",
   "src": "/kaaris/jusquau-ciel.mp4",
   "duration": 1.9,
   "caption": "Toi tu vas monter jusqu'au ciel",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "monte-monte",
   "src": "/kaaris/monte-monte.mp4",
   "duration": 1.37,
   "caption": "Allez, allez, monte, monte",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "allez-ca-monte",
   "src": "/kaaris/allez-ca-monte.mp4",
   "duration": 2.13,
   "caption": "Allez, ça monte, allez !",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "cest-bon-ca",
   "src": "/kaaris/cest-bon-ca.mp4",
   "duration": 1.37,
   "caption": "C'est bon ça",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "monte-bien",
   "src": "/kaaris/monte-bien.mp4",
   "duration": 1.57,
   "caption": "Ça monte bien comme il faut",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "je-vais-monter",
   "src": "/kaaris/je-vais-monter.mp4",
   "duration": 2.57,
   "caption": "Je vais monter, je vais monter",
-  "trigger": "climb"
+  "trigger": "climb",
+  "speaker": "Kaaris"
  },
  {
   "id": "thomas-pesquet",
   "src": "/kaaris/thomas-pesquet.mp4",
   "duration": 2.87,
   "caption": "THOMAS PESQUET 🚀 ça monte bien comme il faut",
-  "trigger": "moon"
+  "trigger": "moon",
+  "speaker": "Kaaris"
  },
  {
   "id": "ah-gars",
   "src": "/kaaris/ah-gars.mp4",
   "duration": 1.2,
   "caption": "Ah gars…",
-  "trigger": "tension"
+  "trigger": "tension",
+  "speaker": "Kaaris"
  },
  {
   "id": "avant-quil-explose",
   "src": "/kaaris/avant-quil-explose.mp4",
   "duration": 2.37,
   "caption": "Je vais m'arrêter avant qu'il explose",
-  "trigger": "tension"
+  "trigger": "tension",
+  "speaker": "Kaaris"
  },
  {
   "id": "je-marrete-a-6",
   "src": "/kaaris/je-marrete-a-6.mp4",
   "duration": 1.2,
   "caption": "Vas-y je m'arrête à 6",
-  "trigger": "cashout"
+  "trigger": "cashout",
+  "speaker": "Kaaris"
  },
  {
   "id": "vas-y-vas-y",
   "src": "/kaaris/vas-y-vas-y.mp4",
   "duration": 2.07,
   "caption": "Allez vas-y, vas-y, vas-y",
-  "trigger": "cashout"
+  "trigger": "cashout",
+  "speaker": "Kaaris"
  },
  {
   "id": "bim-bam-boom",
   "src": "/kaaris/bim-bam-boom.mp4",
   "duration": 0.97,
   "caption": "Bim bam boom 💥",
-  "trigger": "cashout"
+  "trigger": "cashout",
+  "speaker": "Kaaris"
  },
  {
   "id": "putain",
   "src": "/kaaris/putain.mp4",
   "duration": 2.65,
   "caption": "Pfff… putain…",
-  "trigger": "crash"
+  "trigger": "crash",
+  "speaker": "Kaaris"
  },
  {
   "id": "la-haine",
   "src": "/kaaris/la-haine.mp4",
   "duration": 2.8,
   "caption": "Putain… c'est grave la haine",
-  "trigger": "regret"
+  "trigger": "regret",
+  "speaker": "Kaaris"
  },
  {
   "id": "on-recommence",
   "src": "/kaaris/on-recommence.mp4",
   "duration": 1.13,
   "caption": "Allez, on recommence",
-  "trigger": "retry"
+  "trigger": "retry",
+  "speaker": "Kaaris"
  },
  {
   "id": "crash-rembourse",
   "src": "/kaaris/crash-rembourse.mp4",
   "duration": 3.5,
   "caption": "Ton premier crash est remboursé jusqu'à 200 € 😭",
-  "trigger": "first-crash"
+  "trigger": "first-crash",
+  "speaker": "Kaaris"
  },
  {
   "id": "pas-grave",
   "src": "/kaaris/pas-grave.mp4",
   "duration": 3.2,
   "caption": "Si tu te crashes c'est pas grave",
-  "trigger": "retry"
+  "trigger": "retry",
+  "speaker": "Kaaris"
  },
  {
   "id": "laisse-voler",
   "src": "/kaaris/laisse-voler.mp4",
   "duration": 3.3,
   "caption": "Laisse voler ton avion le plus haut possible",
-  "trigger": "idle"
+  "trigger": "idle",
+  "speaker": "Kaaris"
  },
  {
   "id": "tres-simple",
   "src": "/kaaris/tres-simple.mp4",
   "duration": 1.1,
   "caption": "C'est très simple",
-  "trigger": "tip"
+  "trigger": "tip",
+  "speaker": "Kaaris"
  },
  {
   "id": "swipe-up",
   "src": "/kaaris/swipe-up.mp4",
   "duration": 1.9,
   "caption": "Swipe up maintenant pour jouer au jeu de la fusée",
-  "trigger": "broke"
+  "trigger": "broke",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "ma-fusee",
+  "src": "/kaaris/ma-fusee.mp4",
+  "duration": 1.95,
+  "caption": "Ça c'est ma fusée 🚀",
+  "trigger": "launch",
+  "speaker": "Morsay"
  }
 ]

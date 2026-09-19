@@ -7,7 +7,12 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: ".",
-  testMatch: /.*\.spec\.ts/,
+  projects: [
+    // Live game on Monad Testnet (costs gas from the house wallet).
+    { name: "live", testMatch: /game\.spec\.ts/ },
+    // Clip engine against the app in mock mode (free, deterministic).
+    { name: "mock", testMatch: /clips\.spec\.ts/ },
+  ],
   workers: 1,
   fullyParallel: false,
   timeout: 240_000,

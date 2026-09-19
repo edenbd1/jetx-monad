@@ -302,5 +302,13 @@
   "caption": "Allez, je vais jouer 10 balles… C'est parti !",
   "trigger": "bet",
   "speaker": "Kaaris"
+ },
+ {
+  "id": "ravi",
+  "src": "/kaaris/ravi.mp4",
+  "duration": 2.77,
+  "caption": "Mais c'est super ça ! … Ah bah j'suis ravi !",
+  "trigger": "tiny-cashout",
+  "speaker": "Mème"
  }
 ]

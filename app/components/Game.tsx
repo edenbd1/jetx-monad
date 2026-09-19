@@ -7,7 +7,7 @@ import { Sky, type Scene } from "@/components/Sky";
 import { getChain } from "@/lib/get-chain";
 import { msToReach, multiplierAt, toX100, type Address, type Balances, type Flight, type GameChain, type TxInfo } from "@/lib/game-types";
 import { KaarisDirector, RULES } from "@/lib/kaaris";
-import { mult, short, tier, usd } from "@/lib/format";
+import { mult, tier, usd } from "@/lib/format";
 import { BIG_CRASH_WORDS, CRASH_WORDS, MILESTONES, WIN_WORDS, pick, sfx, tierOf } from "@/lib/fx";
 
 type Round = "idle" | "launching" | "flying" | "crashed";
@@ -456,7 +456,6 @@ export function Game() {
                   <span className="wallet-usd num">{bal ? usd(bal.usdc) : "—"}</span>
                   <span className="wallet-meta">
                     <i className="gas" /> {bal ? `${bal.mon.toFixed(3)} MON` : "…"}
-                    <span className="wallet-addr">· {address ? short(address) : "wallet…"}</span>
                   </span>
                 </a>
               </div>

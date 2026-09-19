@@ -3,24 +3,33 @@ import type { Address, Hex } from "viem";
 import { expect } from "@playwright/test";
 import { addressOfKey } from "./chain";
 
-export const CASHOUT_CLIPS = ["je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "sch-incroyable", "je-suis-riche"];
-export const CRASH_CLIPS = ["putain", "bravo-nils", "macron-explosion", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah"];
+export const CASHOUT_CLIPS = ["je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "ravi", "cest-bon-ca", "sch-incroyable", "je-suis-riche"];
+export const CRASH_CLIPS = ["putain", "bravo-nils", "macron-explosion", "ravi", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah"];
+export const ORBIT_CLIPS = ["thomas-pesquet", "laisse-voler"];
 export const BROKE_CLIPS = ["swipe-up", "la-hess"];
-export const RETRY_CLIPS = ["on-recommence", "pas-grave"];
+export const RETRY_CLIPS = ["on-recommence", "pas-grave", "crash-rembourse"];
 
 /** Records every Kaaris clip the cam shows, in order, into window.__clips. */
 export async function recordClips(page: Page) {
   await page.addInitScript(() => {
-    const w = window as unknown as { __clips: string[] };
+    const w = window as unknown as { __clips: string[]; __clipAt: { id: string; m: number }[] };
     w.__clips = [];
+    w.__clipAt = [];
     new MutationObserver(() => {
       const id = document.querySelector(".cam")?.getAttribute("data-clip");
-      if (id && w.__clips.at(-1) !== id) w.__clips.push(id);
+      if (id && w.__clips.at(-1) !== id) {
+        w.__clips.push(id);
+        const m = Number((document.querySelector(".multiplier")?.textContent ?? "0").replace(/[^\d.]/g, "")) || 0;
+        w.__clipAt.push({ id, m });
+      }
     }).observe(document, { subtree: true, attributes: true, attributeFilter: ["data-clip"] });
   });
 }
 
 export const clips = (page: Page) => page.evaluate(() => (window as unknown as { __clips: string[] }).__clips.slice());
+/** Every clip start with the multiplier on screen at that moment. */
+export const clipsAt = (page: Page) =>
+  page.evaluate(() => (window as unknown as { __clipAt: { id: string; m: number }[] }).__clipAt.slice());
 
 export async function waitForClip(page: Page, ids: string[], timeout = 30_000) {
   await expect.poll(async () => (await clips(page)).some((c) => ids.includes(c)), { timeout }).toBe(true);

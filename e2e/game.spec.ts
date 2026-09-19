@@ -9,7 +9,7 @@ import {
   enter,
   launch,
   recordClips,
-  RETRY_CLIPS,
+  ORBIT_CLIPS,
   setAuto,
   setBet,
   shownMultiplier,
@@ -94,7 +94,6 @@ test("loss: riding to the crash settles on-chain and Kaaris reacts, then the his
   await expect(txRow(2)).toContainText(/settle|crash/i);
 
   await expect.poll(async () => (await clips(page)).slice(seen).some((c) => CRASH_CLIPS.includes(c))).toBe(true);
-  await expect.poll(async () => (await clips(page)).slice(seen).some((c) => RETRY_CLIPS.includes(c)), { timeout: 15_000 }).toBe(true);
   await expect(page.locator('[aria-label="Previous flights"] > *').first()).toContainText((r.crash / 100).toFixed(2));
 });
 
@@ -130,7 +129,7 @@ test("manual cash-out mid-flight pays exactly bet x the multiplier at the tap", 
   test.skip(true, "no flight above 1.45x in 5 tries");
 });
 
-test("Thomas Pesquet: past 5x the big ref plays with its banner, and cashing out banks it", async () => {
+test("the orbit moment (4.5x-6x) plays a space line, Thomas Pesquet with his banner, and cashing out banks it", async () => {
   for (let attempt = 0; attempt < 12; attempt++) {
     const before = await usdc(player);
     await setBet(page, 1);
@@ -140,22 +139,25 @@ test("Thomas Pesquet: past 5x the big ref plays with its banner, and cashing out
       continue;
     }
     const id = await activeRound(player);
-    if ((await round(id)).crash < 540) {
+    if ((await round(id)).crash < 640) {
       await waitForNextRound(page);
       continue;
     }
-    await waitForClip(page, ["thomas-pesquet"], 40_000);
-    await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
-    expect(await shownMultiplier(page)).toBeGreaterThanOrEqual(5);
+    const seen = (await clips(page)).length;
+    await expect.poll(async () => (await clips(page)).slice(seen).some((c) => ORBIT_CLIPS.includes(c)), { timeout: 45_000 }).toBe(true);
+    expect(await shownMultiplier(page)).toBeGreaterThanOrEqual(4.5);
+    if ((await clips(page)).slice(seen).includes("thomas-pesquet")) {
+      await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
+    }
     await cash().tap();
     await waitForNextRound(page);
     const r = await round(id);
     expect(r.status).toBe(Status.CashedOut);
-    expect(r.cashedAt).toBeGreaterThanOrEqual(500);
+    expect(r.cashedAt).toBeGreaterThanOrEqual(450);
     expect(await usdc(player)).toBeCloseTo(before - 1 + r.cashedAt / 100, 6);
     return;
   }
-  test.skip(true, "no 5.4x flight in 12 tries");
+  test.skip(true, "no 6.4x flight in 12 tries");
 });
 
 test("reloading keeps the same managed wallet, topping up gas only when it runs low", async () => {

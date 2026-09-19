@@ -510,5 +510,77 @@
   "caption": "Moi je crois pas qu'il y ait de bonne ou de mauvaise situation 📜",
   "trigger": "idle",
   "speaker": "Otis"
+ },
+ {
+  "id": "kaaris-tchoin",
+  "src": "/kaaris/kaaris-tchoin.mp4",
+  "duration": 3.2,
+  "caption": "La go c'est peut-être une fille bien, mais on préfère les tchoins 🎶",
+  "trigger": "climb",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-que-du-sale",
+  "src": "/kaaris/kaaris-que-du-sale.mp4",
+  "duration": 2.4,
+  "caption": "Que du sale. Comme d'hab 😈",
+  "trigger": "climb",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-rend-ouf",
+  "src": "/kaaris/kaaris-rend-ouf.mp4",
+  "duration": 1.7,
+  "caption": "Ça rend ouf mon frère 🤯",
+  "trigger": "tension",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-mbats-les-couilles",
+  "src": "/kaaris/kaaris-mbats-les-couilles.mp4",
+  "duration": 1.2,
+  "caption": "J'm'en bats les couilles, frère 🤷",
+  "trigger": "after-cashout",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-rire",
+  "src": "/kaaris/kaaris-rire.mp4",
+  "duration": 2.5,
+  "caption": "😂😂😂",
+  "trigger": "cashout",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-des-millions",
+  "src": "/kaaris/kaaris-des-millions.mp4",
+  "duration": 3.5,
+  "caption": "Annonceurs, pub, TV… tout ça, ça vaut des millions 💰",
+  "trigger": "big-cashout",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-grosse-galere",
+  "src": "/kaaris/kaaris-grosse-galere.mp4",
+  "duration": 4.1,
+  "caption": "Une grosse galère… une grosse galère 😩",
+  "trigger": "crash",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-menteur-tricheur",
+  "src": "/kaaris/kaaris-menteur-tricheur.mp4",
+  "duration": 1.9,
+  "caption": "T'es un menteur et un tricheur 😤",
+  "trigger": "crash",
+  "speaker": "Kaaris"
+ },
+ {
+  "id": "kaaris-gros-menteur",
+  "src": "/kaaris/kaaris-gros-menteur.mp4",
+  "duration": 1.83,
+  "caption": "T'es un très très gros menteur 🤥",
+  "trigger": "crash",
+  "speaker": "Kaaris"
  }
 ]

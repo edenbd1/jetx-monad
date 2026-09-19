@@ -1,10 +1,11 @@
 import { devices, expect, test, type Page } from "@playwright/test";
-import { BROKE_CLIPS, clips, recordClips, setAuto, setBet, shownMultiplier, waitForClip, waitForQuietCam } from "./game";
+import { clips, clipsAt, recordClips, setAuto, setBet, waitForClip, waitForQuietCam } from "./game";
 
 /**
- * Reaction clip engine, deterministic: runs against the app in mock mode (no chain), where
- * `?crash=` forces the crash points (a comma list plays them in turn). Start it with
- *   NEXT_PUBLIC_CHAIN_MODE=mock pnpm dev -p 3201   (in app/)
+ * Reaction engine, against the app in mock mode (no chain), where `?crash=` forces the crash
+ * points (a comma list plays them in turn). Lines are drawn at random from per-moment pools, so
+ * these tests check the pool each moment draws from, and that the draws actually vary.
+ * Start the server with  NEXT_PUBLIC_CHAIN_MODE=mock pnpm dev -p 3201  (in app/).
  */
 const MOCK_URL = process.env.MOCK_URL || "http://localhost:3201";
 
@@ -12,10 +13,22 @@ const MOCK_URL = process.env.MOCK_URL || "http://localhost:3201";
 const { defaultBrowserType, ...iphone } = devices["iPhone 13"];
 test.use({ ...iphone, baseURL: MOCK_URL });
 
-const SMALL_CRASH = ["putain", "bravo-nils", "macron-explosion", "ravi"];
-const TINY_CASHOUT = ["eleonore", "ravi"];
-const BIG_CRASH = ["la-haine", "catastrophe"];
-const HUGE_CASHOUT = ["sch-incroyable", "je-suis-riche"];
+// Mirrors POOLS in app/lib/kaaris.ts.
+const P = {
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee"],
+  orbit: ["thomas-pesquet", "laisse-voler"],
+  cashTiny: ["eleonore", "ravi"],
+  cashSix: ["je-marrete-a-6", "bim-bam-boom"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "bim-bam-boom"],
+  regret: ["la-haine", "pas-fini"],
+  crashBust: ["brogniart-ah", "putain", "ravi", "bravo-nils"],
+  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah"],
+  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain"],
+  retry: ["on-recommence", "pas-grave", "crash-rembourse"],
+  idle: ["laisse-voler", "pas-faux", "tres-simple"],
+  broke: ["swipe-up", "la-hess"],
+};
 
 /** `crash`: one crash point for every flight, or a comma list played in turn. */
 async function open(page: Page, crash: number | string) {
@@ -35,96 +48,108 @@ async function fly(page: Page, auto: number | null) {
 }
 
 const after = async (page: Page, from: number) => (await clips(page)).slice(from);
+const inPool = (seq: string[], pool: string[]) => seq.some((c) => pool.includes(c));
 
-test("every flight starts with Kaaris only, and a tiny cash-out gets an ironic line (Eléonore / j'suis ravi)", async ({ page }) => {
+test("every flight starts with Kaaris's bet line, and a tiny cash-out gets an ironic line", async ({ page }) => {
   await open(page, 1.5);
   const from = (await clips(page)).length;
   await fly(page, 1.1);
   const seq = await after(page, from);
   expect(seq[0]).toBe("depart");
-  const tiny = seq.findIndex((c) => TINY_CASHOUT.includes(c));
+  const tiny = seq.findIndex((c) => P.cashTiny.includes(c));
   expect(tiny).toBeGreaterThan(0);
   expect(seq.slice(tiny).includes("depart")).toBe(false);
 });
 
-test("an instant 1.00x bust is Brogniart's 'Ah !'", async ({ page }) => {
+test("an instant 1.00x bust draws from the bust lines, in the big boom cam", async ({ page }) => {
   await open(page, 1);
   const from = (await clips(page)).length;
   await fly(page, null);
-  await expect.poll(async () => await after(page, from), { timeout: 10_000 }).toContain("brogniart-ah");
+  await expect.poll(async () => inPool(await after(page, from), P.crashBust), { timeout: 10_000 }).toBe(true);
 });
 
-test("the first crash is 'remboursé', the next small ones are putain / Nils / Macron / ravi, then a retry line", async ({ page }) => {
+test("small crashes on board draw small-crash lines", async ({ page }) => {
   await open(page, 1.4);
   const from = (await clips(page)).length;
   await fly(page, null);
-  await waitForClip(page, ["on-recommence", "pas-grave"], 15_000);
-  await waitForQuietCam(page);
-  await fly(page, null);
-  await expect.poll(async () => (await after(page, from)).some((c) => SMALL_CRASH.includes(c)), { timeout: 15_000 }).toBe(true);
+  await expect.poll(async () => inPool(await after(page, from), P.crashSmall), { timeout: 10_000 }).toBe(true);
   const seq = await after(page, from);
-  expect(seq.indexOf("crash-rembourse")).toBeGreaterThanOrEqual(0);
-  expect(seq.indexOf("crash-rembourse")).toBeLessThan(seq.findIndex((c) => SMALL_CRASH.includes(c)));
+  expect(seq.some((c) => P.crashBig.includes(c) && !P.crashSmall.includes(c))).toBe(false);
 });
 
-test("Morsay plays mid-flight, Thomas Pesquet fires at 5x with its banner, and a cash-out near 6x plays 'je m'arrête à 6'", async ({ page }) => {
-  await open(page, 7.5);
-  const from = (await clips(page)).length;
-  await setAuto(page, null);
-  await page.locator(".cta-bet").tap();
-  await waitForClip(page, ["ma-fusee"], 20_000);
-  await waitForClip(page, ["thomas-pesquet"], 30_000);
-  expect(await shownMultiplier(page)).toBeGreaterThanOrEqual(5);
-  await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
-  await expect.poll(() => shownMultiplier(page), { timeout: 15_000 }).toBeGreaterThanOrEqual(5.7);
-  await page.locator(".cta-cash").tap();
-  await waitForClip(page, ["je-marrete-a-6"], 10_000);
-  const seq = await after(page, from);
-  expect(seq.indexOf("ma-fusee")).toBeLessThan(seq.indexOf("thomas-pesquet"));
+test("the climb isn't the same every flight: early/climb lines vary across flights", async ({ page }) => {
+  test.setTimeout(240_000);
+  await open(page, 3);
+  const firstLines: string[] = [];
+  for (let i = 0; i < 5; i++) {
+    const from = (await clips(page)).length;
+    await fly(page, null);
+    const seq = await after(page, from);
+    const climbLines = seq.filter((c) => P.early.includes(c) || P.climb.includes(c));
+    expect(climbLines.length).toBeGreaterThanOrEqual(2);
+    firstLines.push(climbLines.slice(0, 3).join(","));
+    await waitForQuietCam(page, 20_000);
+  }
+  // Five identical 3x flights must not produce five identical climbs.
+  expect(new Set(firstLines).size).toBeGreaterThanOrEqual(3);
 });
 
-test("a huge cash-out (10x+) gets SCH or 'je suis riche'", async ({ page }) => {
-  await open(page, 12);
-  const from = (await clips(page)).length;
+test("the orbit moment plays a space line between 4.5x and 6x; Thomas Pesquet comes with his banner", async ({ page }) => {
+  test.setTimeout(240_000);
+  await open(page, 6.5);
+  let pesquet = false;
+  for (let i = 0; i < 4 && !pesquet; i++) {
+    const from = (await clipsAt(page)).length;
+    await setAuto(page, null);
+    await page.locator(".cta-bet").tap();
+    await expect(page.locator(".flew")).toBeVisible({ timeout: 60_000 });
+    const orbit = (await clipsAt(page)).slice(from).filter((c) => P.orbit.includes(c.id) && c.m >= 4.4 && c.m <= 6.2);
+    expect(orbit.length).toBeGreaterThanOrEqual(1);
+    if (orbit.some((c) => c.id === "thomas-pesquet")) pesquet = true;
+    await expect(page.locator(".cta-bet")).toBeVisible({ timeout: 30_000 });
+    await waitForQuietCam(page, 20_000);
+  }
+  expect(pesquet).toBe(true);
+});
+
+test("a cash-out near 6x favours 'je m'arrête à 6'; a huge one draws huge-win lines", async ({ page }) => {
+  await open(page, "7,12");
+  let from = (await clips(page)).length;
+  await fly(page, 6);
+  expect(inPool(await after(page, from), P.cashSix)).toBe(true);
+  await waitForQuietCam(page, 20_000);
+  from = (await clips(page)).length;
   await fly(page, 10);
-  expect((await after(page, from)).some((c) => HUGE_CASHOUT.includes(c))).toBe(true);
+  expect(inPool(await after(page, from), P.cashHuge)).toBe(true);
 });
 
-test("cashing out early then watching it fly: 'la haine', then Lassalle's 'c'est pas fini ?'", async ({ page }) => {
+test("cashing out early then watching it fly far draws regret lines", async ({ page }) => {
   await open(page, 9);
   const from = (await clips(page)).length;
   await fly(page, 1.5);
   const seq = await after(page, from);
-  expect(seq).toContain("la-haine");
-  expect(seq).toContain("pas-fini");
-  expect(seq.indexOf("la-haine")).toBeLessThan(seq.indexOf("pas-fini"));
+  expect(seq.filter((c) => P.regret.includes(c)).length).toBeGreaterThanOrEqual(1);
 });
 
-test("crashing on board past 5x is a big-crash line (la haine / catastrophe), not a small one", async ({ page }) => {
-  await open(page, "1.3,5.6");
-  await fly(page, null); // spends the first-crash line
-  await waitForClip(page, ["on-recommence", "pas-grave"], 15_000);
-  await waitForQuietCam(page);
+test("crashing on board past 5x is a big-crash line", async ({ page }) => {
+  await open(page, 5.6);
   const from = (await clips(page)).length;
   await fly(page, null);
-  await expect.poll(async () => (await after(page, from)).some((c) => BIG_CRASH.includes(c)), { timeout: 15_000 }).toBe(true);
-  const seq = await after(page, from);
-  expect(seq.some((c) => SMALL_CRASH.includes(c))).toBe(false);
-  expect(seq).toContain("thomas-pesquet");
+  await expect.poll(async () => inPool((await after(page, from)).slice(-3), P.crashBig), { timeout: 15_000 }).toBe(true);
 });
 
-test("going broke plays 'swipe up' or 'c'est la hess'", async ({ page }) => {
+test("going broke plays a broke line", async ({ page }) => {
   await open(page, 1.2);
   await setBet(page, 1000);
   const from = (await clips(page)).length;
   await fly(page, null);
   await expect(page.locator(".cta-refill")).toBeVisible();
-  await expect.poll(async () => (await after(page, from)).some((c) => BROKE_CLIPS.includes(c)), { timeout: 20_000 }).toBe(true);
+  await expect.poll(async () => inPool(await after(page, from), P.broke), { timeout: 20_000 }).toBe(true);
 });
 
-test("idling on the bet screen plays 'laisse voler' or Kaamelott", async ({ page }) => {
+test("idling on the bet screen plays an idle line", async ({ page }) => {
   test.setTimeout(90_000);
   await open(page, 2);
   const from = (await clips(page)).length;
-  await expect.poll(async () => (await after(page, from)).some((c) => ["laisse-voler", "pas-faux"].includes(c)), { timeout: 40_000 }).toBe(true);
+  await expect.poll(async () => inPool(await after(page, from), P.idle), { timeout: 40_000 }).toBe(true);
 });

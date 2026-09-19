@@ -53,10 +53,10 @@ test("a long flight keeps Kaaris talking: a new line at least every ~5 s", async
     (from) => (window as unknown as { __starts: { id: string; t: number }[] }).__starts.filter((s) => s.t >= from && s.id !== "-"),
     betAt,
   );
-  // ~22 s of flight: at least 7 lines, and no silence longer than the longest clip (Morsay, 4.7 s) + the rhythm gap.
+  // ~27 s of flight: at least 7 lines, and no silence longer than the longest clip (~5 s) + the rhythm gap.
   expect(starts.length).toBeGreaterThanOrEqual(7);
   const gaps = starts.slice(1).map((s, i) => s.t - starts[i].t);
-  expect(Math.max(...gaps)).toBeLessThan(6_500);
+  expect(Math.max(...gaps)).toBeLessThan(7_500);
 });
 
 test("launch, every milestone and the crash each get their animation, with a screen shake on the explosion", async ({ page }) => {

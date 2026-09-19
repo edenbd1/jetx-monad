@@ -27,31 +27,52 @@ export const POOLS = {
   /** Every flight starts with Kaaris placing his bet. */
   start: ["depart"],
   /** Just after lift-off, below 2x. */
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", { id: "ma-fusee", w: 1.5 }],
+  early: [
+    "jusquau-ciel",
+    "monte-monte",
+    "allez-ca-monte",
+    "cest-bon-ca",
+    { id: "ma-fusee", w: 1.5 },
+    { id: "oh-la-la", w: 1.3 },
+    { id: "enorme", w: 1.3 },
+    { id: "infini", w: 0.8 },
+  ],
   /** Climbing, 2x-6x. */
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", { id: "ma-fusee", w: 1.5 }],
-  /** The orbit moment somewhere around 5x: Thomas Pesquet most of the time, else "laisse voler". */
-  orbit: [{ id: "thomas-pesquet", w: 3 }, "laisse-voler"],
+  climb: [
+    "monte-bien",
+    "je-vais-monter",
+    "cest-bon-ca",
+    "allez-ca-monte",
+    "monte-monte",
+    { id: "ma-fusee", w: 1.5 },
+    { id: "oh-la-la", w: 1.3 },
+    { id: "enorme", w: 1.3 },
+    { id: "infini", w: 1.3 },
+    "dinguerie",
+    "magnifique",
+  ],
+  /** The orbit moment somewhere around 5x: Thomas Pesquet most of the time, else Buzz or "laisse voler". */
+  orbit: [{ id: "thomas-pesquet", w: 4 }, { id: "infini", w: 1.5 }, "laisse-voler"],
   /** Getting scary, 6x-12x. */
-  high: ["ah-gars", "avant-quil-explose", "tous-mourir", "je-vais-monter", "monte-bien"],
+  high: ["ah-gars", "avant-quil-explose", "tous-mourir", { id: "ca-va-peter", w: 1.5 }, "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
   /** Deep space, 12x+. */
-  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars"],
+  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "infini", "dinguerie"],
   /** The player already cashed out and the rocket keeps going. */
-  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca"],
+  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca", "oh-la-la", "enorme", "valide", "magnifique"],
   /** Cash-outs by size. */
-  cashTiny: ["eleonore", "ravi"],
-  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom"],
+  cashTiny: ["eleonore", "ravi", "rigolo"],
+  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom", "valide", "magnifique"],
   cashSix: [{ id: "je-marrete-a-6", w: 5 }, "bim-bam-boom"],
-  cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche"],
-  cashHuge: ["sch-incroyable", "je-suis-riche", "bim-bam-boom"],
+  cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche", "magnifique", "dinguerie", "valide"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
   /** Watching the rocket fly on after you got out. */
   regret: ["la-haine", "pas-fini"],
   farAway: ["pas-fini", "la-haine"],
   /** Crashes with the player on board, by how far it went. */
-  crashBust: [{ id: "brogniart-ah", w: 3 }, "putain", "ravi", "bravo-nils"],
-  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah"],
-  crashMid: ["putain", "macron-explosion", "bravo-nils", "catastrophe", "crash-rembourse"],
-  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain"],
+  crashBust: [{ id: "brogniart-ah", w: 2 }, "putain", "ravi", "bravo-nils", "coup-dur", "rigolo"],
+  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo"],
+  crashMid: ["putain", "macron-explosion", "bravo-nils", "catastrophe", "crash-rembourse", "boulette", "coup-dur"],
+  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain", "boulette"],
   /** Follow-up after a crash. */
   retry: ["on-recommence", "pas-grave", "crash-rembourse"],
   idle: ["laisse-voler", "pas-faux", "tres-simple"],
@@ -79,11 +100,11 @@ export const RULES = {
   retryDelayMs: 1_200,
   retryChance: 0.75,
   idleMs: 20_000,
-  climbCooldownMs: 900,
-  /** Rhythm: a new line once the cam has been quiet for a random gap in this range (ms). */
-  rhythmGapMs: [700, 1_900],
-  /** A line played within this many picks is heavily avoided. */
-  recentWindow: 6,
+  climbCooldownMs: 150,
+  /** Rhythm: during a flight there's (almost) always a meme on screen: the next one starts after a short random pause (ms). */
+  rhythmGapMs: [150, 500],
+  /** A line played within this many picks is heavily avoided (the memory persists across games on a device). */
+  recentWindow: 10,
 } as const;
 
 // ---------------------------------------------------------------- director
@@ -99,6 +120,28 @@ type Request = { id: string; priority: Priority; mode: Mode; at?: number };
 /** A queued reaction older than this is stale (the moment it reacted to has passed). */
 const PENDING_TTL_MS = 2_500;
 
+const POOL_NAME = new Map<Pool, string>(Object.entries(POOLS).map(([name, pool]) => [pool as Pool, name]));
+
+/**
+ * What this device has already seen, kept in localStorage so the next game (even after a reload)
+ * starts from fresh lines instead of replaying the same ones.
+ */
+const MEMORY_KEY = "fusee-memes-v1";
+type Memory = { history: string[]; lastPick: Record<string, string> };
+
+function loadMemory(): Memory {
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(MEMORY_KEY) : null;
+    if (raw) {
+      const m = JSON.parse(raw) as Partial<Memory>;
+      return { history: Array.isArray(m.history) ? m.history.slice(-50) : [], lastPick: m.lastPick ?? {} };
+    }
+  } catch {
+    // unreadable storage: start fresh
+  }
+  return { history: [], lastPick: {} };
+}
+
 const between = (range: readonly [number, number] | readonly number[]) => range[0] + Math.random() * (range[1] - range[0]);
 
 /** Decides which clip plays when, from game events. */
@@ -108,9 +151,9 @@ export class KaarisDirector {
   private lastEndedAt = 0;
   private token = 0;
   /** Session-wide play history, newest last: drives the anti-repetition. */
-  private history: string[] = [];
+  private history: string[];
   /** Last line drawn from each pool: the same moment never repeats its previous line. */
-  private lastPick = new Map<Pool, string>();
+  private lastPick: Record<string, string>;
   private followUp: ReturnType<typeof setTimeout> | null = null;
 
   // per flight
@@ -121,7 +164,19 @@ export class KaarisDirector {
   private fired = new Set<string>();
   private nextGap = 1_000;
 
-  constructor(private player: ClipPlayer) {}
+  constructor(private player: ClipPlayer) {
+    const memory = loadMemory();
+    this.history = memory.history;
+    this.lastPick = memory.lastPick;
+  }
+
+  private saveMemory() {
+    try {
+      localStorage.setItem(MEMORY_KEY, JSON.stringify({ history: this.history, lastPick: this.lastPick } satisfies Memory));
+    } catch {
+      // storage full or blocked: the in-memory history still works for this game
+    }
+  }
 
   // ------------------------------------------------ game hooks
 
@@ -228,15 +283,16 @@ export class KaarisDirector {
   private pick(pool: Pool): string {
     const entries = pool.map((e) => (typeof e === "string" ? { id: e, w: 1 } : e)).filter((e) => clipById(e.id));
     if (entries.length <= 1) return entries[0]?.id ?? "";
-    const previous = this.lastPick.get(pool);
+    const name = POOL_NAME.get(pool) ?? "";
+    const previous = this.lastPick[name];
     const scored = entries.map((e) => {
       const last = this.history.lastIndexOf(e.id);
       const ago = last < 0 ? Infinity : this.history.length - 1 - last;
-      const penalty = e.id === previous || ago === 0 ? 0 : ago < RULES.recentWindow ? 0.08 * (ago + 1) : 1;
+      const penalty = e.id === previous || ago === 0 ? 0 : ago < RULES.recentWindow ? 0.06 * (ago + 1) : 1;
       return { id: e.id, w: e.w * penalty };
     });
     const chosen = this.draw(scored);
-    this.lastPick.set(pool, chosen);
+    if (name) this.lastPick[name] = chosen;
     return chosen;
   }
 
@@ -254,7 +310,7 @@ export class KaarisDirector {
   /** Keeps a line going every couple of seconds while the rocket flies. */
   private keepRhythm(multiplier: number, cashedAt: number | null) {
     const now = Date.now();
-    if (this.current || this.pending || now - this.flightStartedAt < 1_500 || now - this.lastEndedAt < this.nextGap) return;
+    if (this.current || this.pending || now - this.flightStartedAt < 800 || now - this.lastEndedAt < this.nextGap) return;
     const pool =
       cashedAt !== null ? POOLS.afterCash : multiplier >= 12 ? POOLS.space : multiplier >= 6 ? POOLS.high : multiplier >= 2 ? POOLS.climb : POOLS.early;
     this.nextGap = between(RULES.rhythmGapMs);
@@ -297,6 +353,7 @@ export class KaarisDirector {
     this.current = { ...req, token };
     this.history.push(req.id);
     if (this.history.length > 50) this.history.shift();
+    this.saveMemory();
     this.player.play(clip, req.mode).then(() => {
       if (this.current?.token !== token) return; // interrupted
       this.current = null;

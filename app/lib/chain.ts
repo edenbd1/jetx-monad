@@ -20,7 +20,7 @@ const USDC = 1e6;
 const GAS_HEADROOM = 1.1;
 const FEE_TTL_MS = 30_000;
 /** Ask the house for gas below this balance (a flight costs ~0.02 MON). */
-const LOW_MON = 0.05;
+const LOW_MON = 0.04;
 
 type Method = "launch" | "cashOut" | "settle";
 type RawReceipt = { status: Hex; blockNumber: Hex; transactionHash: Hash; logs: TransactionReceipt["logs"] };

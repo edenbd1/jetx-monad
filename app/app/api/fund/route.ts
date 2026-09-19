@@ -7,9 +7,9 @@ import { CHAIN, DEPLOYMENT, RPC_URL } from "@/lib/config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Players get gas when they drop below MIN_MON, and 1,000 test USDC when nearly broke. */
-const MIN_MON = parseEther("0.05");
-const TOPUP_MON = parseEther("0.2");
+/** Players get gas (~4 flights) when they drop below MIN_MON, and 1,000 test USDC when nearly broke. */
+const MIN_MON = parseEther("0.04");
+const TOPUP_MON = parseEther("0.1");
 const MIN_USDC = BigInt(5e6);
 const GRANT_USDC = BigInt(1_000e6);
 

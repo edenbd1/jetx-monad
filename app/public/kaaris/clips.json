@@ -310,5 +310,93 @@
   "caption": "Mais c'est super ça ! … Ah bah j'suis ravi !",
   "trigger": "tiny-cashout",
   "speaker": "Mème"
+ },
+ {
+  "id": "ca-va-peter",
+  "src": "/kaaris/ca-va-peter.mp4",
+  "duration": 3.2,
+  "caption": "Et ça va péter ! Péter !",
+  "trigger": "tension",
+  "speaker": "Ça va péter"
+ },
+ {
+  "id": "infini",
+  "src": "/kaaris/infini.mp4",
+  "duration": 4.83,
+  "caption": "Vers l'infini et au-delà ! 🚀",
+  "trigger": "orbit",
+  "speaker": "Buzz"
+ },
+ {
+  "id": "oh-la-la",
+  "src": "/kaaris/oh-la-la.mp4",
+  "duration": 3.4,
+  "caption": "Oh la la…",
+  "trigger": "climb",
+  "speaker": "Mème"
+ },
+ {
+  "id": "magnifique",
+  "src": "/kaaris/magnifique.mp4",
+  "duration": 3.2,
+  "caption": "C'est magnifique 😭",
+  "trigger": "cashout",
+  "speaker": "Mème"
+ },
+ {
+  "id": "boulette",
+  "src": "/kaaris/boulette.mp4",
+  "duration": 2.1,
+  "caption": "Ah la boulette !",
+  "trigger": "crash",
+  "speaker": "Le Dîner de cons"
+ },
+ {
+  "id": "coup-dur",
+  "src": "/kaaris/coup-dur.mp4",
+  "duration": 1.97,
+  "caption": "Aïe, coup dur pour Guillaume",
+  "trigger": "crash",
+  "speaker": "Mème"
+ },
+ {
+  "id": "dinguerie",
+  "src": "/kaaris/dinguerie.mp4",
+  "duration": 1.08,
+  "caption": "C'est une dinguerie",
+  "trigger": "cashout",
+  "speaker": "Mème"
+ },
+ {
+  "id": "valide",
+  "src": "/kaaris/valide.mp4",
+  "duration": 1.65,
+  "caption": "La blague est valide ✅",
+  "trigger": "cashout",
+  "speaker": "Mème"
+ },
+ {
+  "id": "mourir-tranquille",
+  "src": "/kaaris/mourir-tranquille.mp4",
+  "duration": 3.6,
+  "caption": "On peut mourir tranquille",
+  "trigger": "huge-cashout",
+  "speaker": "Thierry Roland"
+ },
+ {
+  "id": "enorme",
+  "src": "/kaaris/enorme.mp4",
+  "duration": 1.27,
+  "caption": "C'est énorme c'qui s'passe",
+  "trigger": "climb",
+  "speaker": "Kemar"
+ },
+ {
+  "id": "rigolo",
+  "src": "/kaaris/rigolo.mp4",
+  "duration": 3.4,
+  "caption": "C'est rigolo hein !!",
+  "trigger": "crash",
+  "speaker": "Morning Live"
  }
 ]

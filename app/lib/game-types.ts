@@ -46,8 +46,8 @@ export interface GameChain {
   explorerAddress(address: Address): string;
 }
 
-/** Multiplier curve shared by the UI and the contract checks: m(t) = e^(GROWTH * seconds). */
-export const GROWTH_PER_SECOND = 0.1;
+/** Multiplier curve of the UI: m(t) = e^(GROWTH * seconds) (2x after ~8.7 s, 5x after ~20 s). */
+export const GROWTH_PER_SECOND = 0.08;
 export const multiplierAt = (elapsedMs: number) => Math.exp((GROWTH_PER_SECOND * Math.max(0, elapsedMs)) / 1000);
 export const msToReach = (multiplier: number) => (Math.log(Math.max(1, multiplier)) / GROWTH_PER_SECOND) * 1000;
 /** Multipliers are settled on-chain at 2 decimals (x100 fixed point), rounded down. */

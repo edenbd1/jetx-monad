@@ -36,7 +36,7 @@ const FEE_TTL_MS = 5 * 60_000;
 /** Monad's 3-block delayed state after a top-up is included (~0.4 s blocks), plus margin. */
 const FUNDING_SETTLE_MS = 1_800;
 /** Ask the house for gas below this balance (a flight costs ~0.025 MON). */
-const LOW_MON = 0.04;
+const LOW_MON = 0.09;
 
 type Method = "launch" | "cashOut" | "settle" | "faucet";
 type Fees = { maxFeePerGas: bigint; maxPriorityFeePerGas: bigint; at: number };

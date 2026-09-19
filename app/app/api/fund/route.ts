@@ -214,10 +214,13 @@ async function fund(h: HouseState, player: Address): Promise<Result> {
   const mon = await h.client.getBalance({ address: player });
   if (mon >= MIN_MON) return { ok: true, sent: {}, block: 0 };
   let error = "top-up kept reverting";
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
+      if (attempt > 0 && (await h.client.getBalance({ address: player })) >= MIN_MON) return { ok: true, sent: {}, block: 0 };
       const hash = await enqueue(h, player);
-      const receipt = await h.client.waitForTransactionReceipt({ hash, pollingInterval: 150, timeout: 30_000 });
+      // Monad confirms in under a second: a tx that isn't in after 6 s lost a nonce race with another
+      // instance and was dropped, so re-queue instead of waiting out a long timeout.
+      const receipt = await h.client.waitForTransactionReceipt({ hash, pollingInterval: 150, timeout: 6_000 });
       if (receipt.status === "success") return { ok: true, sent: { mon: hash }, block: Number(receipt.blockNumber) };
       // A reverted batch (reserve rule) still consumed a nonce: just go again.
     } catch (e) {

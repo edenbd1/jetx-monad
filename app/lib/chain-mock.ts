@@ -66,11 +66,20 @@ export function createMockChain(): GameChain {
   };
 }
 
-/** Mock only: `?crash=6.2` forces every flight's crash point (for testing and demos). */
+/**
+ * Mock only: `?crash=6.2` forces every flight's crash point, `?crash=1.3,5.6` plays them in turn
+ * (cycling), for tests and rehearsed demos.
+ */
+let forcedIndex = 0;
 function forcedCrash() {
   if (typeof window === "undefined") return null;
-  const v = Number(new URLSearchParams(window.location.search).get("crash"));
-  return v >= 1 ? Math.floor(v * 100) / 100 : null;
+  const list = (new URLSearchParams(window.location.search).get("crash") ?? "")
+    .split(",")
+    .map(Number)
+    .filter((v) => v >= 1);
+  if (list.length === 0) return null;
+  const v = list[forcedIndex++ % list.length];
+  return Math.floor(v * 100) / 100;
 }
 
 /** P(crash >= x) = 0.97 / x, floored to 2 decimals like the contract. */

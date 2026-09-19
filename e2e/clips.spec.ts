@@ -39,7 +39,7 @@ test("bet, launch and a quick cash-out play in order, with no stale launch clip 
   expect(seq[0]).toBe("dix-balles");
   const cashAt = seq.findIndex((c) => ["vas-y-vas-y", "bim-bam-boom", "je-marrete-a-6"].includes(c));
   expect(cashAt).toBeGreaterThan(0);
-  expect(seq.slice(cashAt).some((c) => ["cest-parti", "celle-la-bonne"].includes(c))).toBe(false);
+  expect(seq.slice(cashAt).some((c) => ["cest-parti", "ma-fusee", "celle-la-bonne"].includes(c))).toBe(false);
 });
 
 test("the first crash is 'remboursé', the next ones get 'putain', each followed by a retry line", async ({ page }) => {

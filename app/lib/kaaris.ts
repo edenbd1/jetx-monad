@@ -1,7 +1,7 @@
 import clipsJson from "@/public/kaaris/clips.json";
 
 /** Kaaris reaction clips cut from his crash-game ad (public/kaaris). */
-export type Clip = { id: string; src: string; duration: number; caption: string; trigger: string };
+export type Clip = { id: string; src: string; duration: number; caption: string; trigger: string; speaker?: string };
 
 export const CLIPS = clipsJson as Clip[];
 const BY_ID = new Map(CLIPS.map((c) => [c.id, c]));
@@ -36,7 +36,7 @@ export const RULES = {
   firstBet: ["dix-balles", "tres-simple"],
   bet: "dix-balles",
   betChance: 0.4,
-  launch: ["cest-parti", "celle-la-bonne"],
+  launch: ["cest-parti", "ma-fusee", "celle-la-bonne"],
   /** Cash-out reactions: the "je m'arrête à 6" window, then big / small wins. */
   cashOutSix: { clip: "je-marrete-a-6", from: 5.5, to: 6.5 },
   cashOutBig: { clip: "bim-bam-boom", from: 2 },

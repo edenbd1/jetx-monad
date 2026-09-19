@@ -103,7 +103,7 @@ export const KaarisCam = forwardRef<KaarisCamHandle, { muted: boolean; onMode?: 
       <div className="cam-frame">
         <video ref={video} className="cam-video" playsInline preload="auto" muted={muted} poster="/kaaris/poster.jpg" />
         <span className="cam-live">
-          <i /> KAARIS
+          <i /> {(showing?.clip.speaker ?? "Kaaris").toUpperCase()}
         </span>
       </div>
       {showing && (

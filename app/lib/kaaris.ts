@@ -42,7 +42,7 @@ export const RULES = {
   cashOutSix: { clip: "je-marrete-a-6", from: 5.5, to: 6.5 },
   cashOutHuge: { clips: ["sch-incroyable", "je-suis-riche"], from: 10 },
   cashOutBig: { clip: "bim-bam-boom", from: 2 },
-  cashOutTiny: { clips: ["eleonore"], below: 1.2 },
+  cashOutTiny: { clips: ["eleonore", "ravi"], below: 1.2 },
   cashOutSmall: "vas-y-vas-y",
   /** After you cashed out: the rocket keeps going (regret), then keeps going far (Lassalle). */
   regret: { clip: "la-haine", ratio: 1.5, min: 3 },
@@ -51,7 +51,7 @@ export const RULES = {
   instantBust: "brogniart-ah",
   firstCrash: "crash-rembourse",
   bigCrash: { clips: ["la-haine", "catastrophe"], from: 5 },
-  crash: ["putain", "bravo-nils", "macron-explosion"],
+  crash: ["putain", "bravo-nils", "macron-explosion", "ravi"],
   retry: ["on-recommence", "pas-grave"],
   retryDelayMs: 1_200,
   idle: ["laisse-voler", "pas-faux"],

@@ -25,7 +25,7 @@ type Star = { x: number; y: number; r: number; depth: number; tw: number };
 type Particle = { x: number; y: number; vx: number; vy: number; hue: number; size: number };
 type Burst = { at: number; x: number; y: number; parts: Particle[] };
 
-const PAD = { left: 18, right: 42, top: 34, bottom: 30 };
+const PAD = { left: 18, right: 42, top: 34, bottom: 16 };
 const EXPLOSION_MS = 1_100;
 
 const lerp = (a: number, b: number, k: number) => a + (b - a) * k;
@@ -177,8 +177,6 @@ export function Sky({ scene }: { scene: RefObject<Scene> }) {
         ctx.moveTo(x, PAD.top);
         ctx.lineTo(x, h - PAD.bottom);
         ctx.stroke();
-        ctx.fillStyle = "rgba(170, 180, 255, 0.35)";
-        ctx.fillText(`${Math.round(t / 1000)}s`, x, h - 10);
       }
 
       // --- curve

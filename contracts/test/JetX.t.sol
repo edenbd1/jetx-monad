@@ -156,12 +156,13 @@ contract JetXTest is Test {
         }
     }
 
-    /// Empirical check of P(crash >= x) = 0.97 / x over many draws.
+    /// Empirical check of the boosted curve P(crash >= x) = 0.985 / (1 + (x - 1) / 1.5).
     function test_crashDistribution() public {
         vm.prank(house);
         game.grant(alice, 100_000e6);
         uint256 n = 4000;
         uint256 atLeast2;
+        uint256 atLeast5;
         uint256 atLeast10;
         uint256 instant;
         uint256 capped;
@@ -170,6 +171,7 @@ contract JetXTest is Test {
             vm.prevrandao(bytes32(i * 7919 + 1));
             (uint256 id, uint32 crash) = _launch(alice, 1e6);
             if (crash >= 200) ++atLeast2;
+            if (crash >= 500) ++atLeast5;
             if (crash >= 1000) ++atLeast10;
             if (crash == 100) ++instant;
             assertLe(crash, 5_000, "above the 50x cap");
@@ -177,13 +179,28 @@ contract JetXTest is Test {
             vm.prank(alice);
             game.settle(id);
         }
-        // Expected: 48.5% >= 2x, 9.7% >= 10x, and 3.96% at exactly 1.00x (3% busts plus the
-        // draws that floor to 1.00x), with room for binomial noise.
-        assertApproxEqAbs(atLeast2 * 1000 / n, 485, 30);
-        assertApproxEqAbs(atLeast10 * 1000 / n, 97, 20);
-        assertApproxEqAbs(instant * 1000 / n, 40, 12);
-        // 0.97 / 50 = 1.94% of flights would have gone past 50x: they all land exactly on the cap.
-        assertApproxEqAbs(capped * 1000 / n, 19, 8);
+        // Expected: 59.1% >= 2x, 26.9% >= 5x, 14.1% >= 10x, 1.5% instant busts, 2.9% on the 50x cap.
+        assertApproxEqAbs(atLeast2 * 1000 / n, 591, 30);
+        assertApproxEqAbs(atLeast5 * 1000 / n, 269, 25);
+        assertApproxEqAbs(atLeast10 * 1000 / n, 141, 20);
+        assertApproxEqAbs(instant * 1000 / n, 15, 8);
+        assertApproxEqAbs(capped * 1000 / n, 29, 10);
+    }
+
+    function test_houseCanTuneTheCurveWithinBounds() public {
+        assertEq(game.rtpBps(), 9_850);
+        assertEq(game.boostBps(), 15_000);
+        vm.expectRevert();
+        game.setCurve(9_700, 10_000); // not the house
+        vm.startPrank(house);
+        vm.expectRevert(JetX.BadCurve.selector);
+        game.setCurve(8_999, 15_000);
+        vm.expectRevert(JetX.BadCurve.selector);
+        game.setCurve(9_850, 30_001);
+        game.setCurve(9_700, 10_000); // back to the classic 0.97 / x curve
+        vm.stopPrank();
+        assertEq(game.rtpBps(), 9_700);
+        assertEq(game.boostBps(), 10_000);
     }
 
     function test_houseCanMoveTheCapWithinBounds() public {

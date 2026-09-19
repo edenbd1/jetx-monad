@@ -43,20 +43,28 @@ async function open(page: Page, crash: number) {
 const fx = (page: Page) => page.evaluate(() => (window as unknown as { __fx: string[] }).__fx.slice());
 const flashes = (page: Page) => page.evaluate(() => (window as unknown as { __flashes: string[] }).__flashes.slice());
 
-test("a long flight keeps Kaaris talking: a new line at least every ~5 s", async ({ page }) => {
+test("a long flight keeps a meme on screen and never plays the same one twice", async ({ page }) => {
+  test.setTimeout(120_000);
   await open(page, 9);
   const betAt = await page.evaluate(() => performance.now());
   await setAuto(page, null);
   await page.locator(".cta-bet").tap();
   await expect(page.locator(".flew")).toBeVisible({ timeout: 60_000 });
-  const starts = await page.evaluate(
+  const inFlight = await page.evaluate(
     (from) => (window as unknown as { __starts: { id: string; t: number }[] }).__starts.filter((s) => s.t >= from && s.id !== "-"),
     betAt,
   );
-  // ~27 s of flight: at least 7 lines, and no silence longer than the longest clip (~5 s) + the rhythm gap.
-  expect(starts.length).toBeGreaterThanOrEqual(7);
-  const gaps = starts.slice(1).map((s, i) => s.t - starts[i].t);
+  // ~37 s of flight: many lines, and no silence longer than the longest clip (~5 s) + the rhythm gap.
+  expect(inFlight.length).toBeGreaterThanOrEqual(10);
+  const gaps = inFlight.slice(1).map((s, i) => s.t - inFlight[i].t);
   expect(Math.max(...gaps)).toBeLessThan(7_500);
+  // The crash lines that follow belong to the same flight: still no repeat.
+  await page.waitForTimeout(8_000);
+  const ids = await page.evaluate(
+    (from) => (window as unknown as { __starts: { id: string; t: number }[] }).__starts.filter((s) => s.t >= from && s.id !== "-").map((s) => s.id),
+    betAt,
+  );
+  expect(ids.length, ids.join(",")).toBe(new Set(ids).size);
 });
 
 test("launch, every milestone and the crash each get their animation, with a screen shake on the explosion", async ({ page }) => {

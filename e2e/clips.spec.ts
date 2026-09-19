@@ -15,19 +15,19 @@ test.use({ ...iphone, baseURL: MOCK_URL });
 
 // Mirrors POOLS in app/lib/kaaris.ts.
 const P = {
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini"],
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini", "cest-parti", "celle-la-bonne", "okay"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
   orbit: ["thomas-pesquet", "infini", "laisse-voler"],
-  cashTiny: ["eleonore", "ravi", "rigolo"],
+  cashTiny: ["eleonore", "ravi", "rigolo", "cest-cela-oui"],
   cashSix: ["je-marrete-a-6", "bim-bam-boom"],
   cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
   regret: ["la-haine", "pas-fini"],
-  crashBust: ["brogniart-ah", "putain", "ravi", "bravo-nils", "coup-dur", "rigolo"],
-  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo"],
-  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain", "boulette"],
-  retry: ["on-recommence", "pas-grave", "crash-rembourse"],
-  idle: ["laisse-voler", "pas-faux", "tres-simple"],
-  broke: ["swipe-up", "la-hess"],
+  crashBust: ["brogniart-ah", "bravo-nils", "putain", "ravi", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "pas-de-bras", "visiteurs-binz"],
+  crashSmall: ["bravo-nils", "putain", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "houston", "cest-cela-oui", "pas-de-bras"],
+  crashBig: ["bravo-nils", "la-haine", "catastrophe", "macron-explosion", "putain", "boulette", "sentence-irrevocable", "monde-de-merde", "etchebest", "visiteurs-binz", "houston"],
+  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"],
+  idle: ["laisse-voler", "pas-faux", "tres-simple", "bonne-situation", "cest-cela-oui"],
+  broke: ["swipe-up", "la-hess", "malentendu", "pas-de-bras"],
 };
 
 /** `crash`: one crash point for every flight, or a comma list played in turn. */

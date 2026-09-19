@@ -14,27 +14,27 @@ Built at **Monad Blitz Paris** (19 September 2026).
 - **Two transactions per rocket.** `launch(bet)` when you tap BET (the bet is burned and the crash point drawn), then `cashOut(id, multiplier)` when you tap CASH OUT, or `settle(id)` once the rocket has blown up. Every flight is on-chain and linked to the explorer.
 - **Bet what you have.** From $0.10 up to the whole balance (MAX chip): there is no house maximum, so a lucky run can go all-in on its winnings.
 - **Instant on Monad.** Transactions are signed in the browser with a pre-warmed nonce, fees and gas limit, and sent with `eth_sendRawTransactionSync`: one round trip returns the receipt, in about half a second.
-- **Kaaris reacts live, with the French meme crew.** A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, drawn at random with weights, and the picks are remembered on the device, so the next game never replays the same lines at the same spots:
+- **Kaaris reacts live, with the French meme crew.** A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, dealt like a shuffled deck saved on the device: every meme of a pool plays before one comes back, none plays twice in the same flight, and the next game carries on the decks instead of replaying the same lines at the same spots:
   - **start:** Kaaris only, "allez, je vais jouer 10 balles… c'est parti";
-  - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée", "oh là là", "énorme", "vers l'infini et au-delà", "c'est une dinguerie", "magnifique";
+  - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée", "oh là là", "énorme", Jacquouille's "Okayyy", JCVD's "je suis aware", "vers l'infini et au-delà", "c'est une dinguerie", "magnifique";
   - **orbit (random slot between 4.5x and 6x):** Thomas Pesquet, Buzz l'Éclair or "laisse voler ton avion";
-  - **high up:** "ça va péter", "on va tous mourir", Les Visiteurs, "avant qu'il explose";
+  - **high up:** "ça va péter", "on va tous mourir", Les Visiteurs, "avant qu'il explose", Foucault's "c'est votre dernier mot ?";
   - **cash out:** Eléonore or "rigolo" under 1.2x (ironic), "je m'arrête à 6", "bim bam boom", "validé", SCH, "je suis riche" or "je peux mourir tranquille" past 10x;
   - **after you cashed out:** "c'est grave la haine" as it keeps climbing, Jean Lassalle's "c'est pas fini ?" when it goes far;
-  - **crash:** Denis Brogniart's "Ah !" on a 1.00x bust, then putain / Nils / Macron / "boulette" / "coup dur", Taxi 2's "catastrophe" on big crashes, "premier crash remboursé" to relaunch;
-  - **idle / broke:** "laisse voler ton avion", Kaamelott, "swipe up", "c'est la hess".
+  - **crash (a crash line, often a second one, then an invitation to relaunch):** Nils's "super pour l'appareil photo" (the favourite), Brogniart's "Ah !" and "la sentence est irrévocable", "vous êtes le maillon faible, au revoir", "Houston, on a un problème", "monde de merde", Jean-Pierre Coffe, Etchebest, Giscard's "au revoir", "pas de bras, pas de chocolat", "qu'est-ce que c'est que ce binz", putain / Macron / "boulette" / "coup dur", Taxi 2's "catastrophe"; then "sur un malentendu, ça peut marcher" or "premier crash remboursé";
+  - **idle / broke:** "laisse voler ton avion", Kaamelott, Otis's "bonne ou mauvaise situation", "c'est cela, oui", "swipe up", "c'est la hess".
 
 ## Game math
 
-Multipliers are x100 fixed point on-chain. The crash point starts from the classic crash-game draw and is made more generous for the testnet event:
+Multipliers are x100 fixed point on-chain. The crash point starts from the classic crash-game draw and is made much more generous for the testnet event. The live game runs `setCurve(9900, 25000)`:
 
 ```
-base:   P(base ≥ x) = 0.985 / x          (1.5% instant busts at 1.00x)
-crash:  crash = 1 + (base − 1) × 1.5     (every flight above 1x stretched by 50%)
-        → P(crash ≥ x) = 0.985 / (1 + (x − 1) / 1.5), capped at 50x
+base:   P(base ≥ x) = 0.99 / x           (1% instant busts at 1.00x)
+crash:  crash = 1 + (base − 1) × 2.5     (every flight above 1x stretched 2.5x)
+        → P(crash ≥ x) = 0.99 / (1 + (x − 1) / 2.5), capped at 50x
 ```
 
-That gives a median crash around 2.45x, 59% of flights past 2x, 27% past 5x and 14% past 10x. The house can retune both knobs (`setCurve`) and the cap (`setMaxMultiplier`) on-chain within fixed bounds. The rocket's multiplier grows slowly, as `m(t) = e^(0.06·t)` (2x after ~11.5 s, 5x after ~27 s, 10x after ~38 s). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
+That gives a median crash around 3.45x, 71% of flights past 2x, 38% past 5x, 22% past 10x and ~5% reaching the 50x cap (contract defaults at deploy: 0.985 and 1.5x, median ~2.45x). The house can retune both knobs (`setCurve`) and the cap (`setMaxMultiplier`) on-chain within fixed bounds. The rocket's multiplier grows slowly, as `m(t) = e^(0.06·t)` (2x after ~11.5 s, 5x after ~27 s, 10x after ~38 s). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
 
 ## Contracts
 
@@ -77,7 +77,7 @@ BASE_URL=https://jetx-monad.vercel.app npx playwright test
 ```
 contracts/   Foundry: src/JetX.sol, src/JetUSD.sol, tests (incl. distribution check), deploy script
 app/         Next.js mobile game: rocket canvas, bet panel, Kaaris clip engine, managed wallet, /api/fund
-app/public/kaaris/   50 reaction clips + clips.json (caption, trigger, speaker)
+app/public/kaaris/   65 reaction clips + clips.json (caption, trigger, speaker)
 e2e/         Playwright tests against the live game (phone viewport, on-chain assertions)
 docs/        Screenshots
 ```

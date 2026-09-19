@@ -4,16 +4,17 @@ import { expect } from "@playwright/test";
 import { addressOfKey } from "./chain";
 
 export const CASHOUT_CLIPS = [
-  "je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "ravi", "rigolo", "cest-bon-ca",
+  "je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "ravi", "rigolo", "cest-bon-ca", "cest-cela-oui", "okay",
   "sch-incroyable", "je-suis-riche", "mourir-tranquille", "magnifique", "dinguerie", "valide",
 ];
 export const CRASH_CLIPS = [
   "putain", "bravo-nils", "macron-explosion", "ravi", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah",
-  "boulette", "coup-dur", "rigolo",
+  "boulette", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "pas-de-bras", "visiteurs-binz",
+  "houston", "cest-cela-oui", "sentence-irrevocable", "monde-de-merde", "etchebest",
 ];
 export const ORBIT_CLIPS = ["thomas-pesquet", "infini", "laisse-voler"];
-export const BROKE_CLIPS = ["swipe-up", "la-hess"];
-export const RETRY_CLIPS = ["on-recommence", "pas-grave", "crash-rembourse"];
+export const BROKE_CLIPS = ["swipe-up", "la-hess", "malentendu", "pas-de-bras"];
+export const RETRY_CLIPS = ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"];
 
 /** Records every Kaaris clip the cam shows, in order, into window.__clips. */
 export async function recordClips(page: Page) {

@@ -158,6 +158,8 @@ input {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /* The italic slant overhangs the last letter's box: pad so the gradient still paints it. */
+  padding-right: 0.18em;
 }
 
 .brand span {
@@ -178,6 +180,7 @@ input {
   align-items: center;
   font-size: 76px;
   line-height: 0.9;
+  padding: 0.08em 0.18em 0;
   filter: drop-shadow(0 8px 30px rgba(255, 77, 141, 0.35));
 }
 

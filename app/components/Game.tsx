@@ -364,7 +364,6 @@ export function Game() {
               </div>
               <p className="splash-sub">Le jeu de la fusée. Chaque vol = 2 transactions sur Monad.</p>
               <div className="splash-tap">Appuie pour jouer</div>
-              <p className="splash-foot">Wallet géré pour toi · USDC de test · aucune connexion</p>
             </div>
           </button>
         )}

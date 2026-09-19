@@ -42,7 +42,6 @@ const TOPUP_MON = parseEther("0.2");
 const BATCH_WINDOW_MS = 250;
 const MAX_BATCH = 30;
 const RESERVE = parseEther("10");
-const TRANSFER_GAS = BigInt(21_000);
 
 /** Abuse limits. Keyed per player: 30 phones share one venue IP, so the per-IP cap is loose. */
 const WINDOW_MS = 10 * 60_000;
@@ -51,7 +50,7 @@ const MAX_PER_IP = 600;
 
 type Result = { ok: true; sent: { mon?: Hash }; block: number } | { ok: false; error: string };
 
-type Waiter = { player: Address; resolve: (hash: Hash) => void; reject: (e: unknown) => void };
+type Waiter = { player: Address; resolve: (r: Included) => void; reject: (e: unknown) => void };
 
 type HouseState = {
   account: PrivateKeyAccount;
@@ -126,16 +125,29 @@ async function houseBalance(h: HouseState) {
   return h.balance.value;
 }
 
-/** Broadcasts through each RPC in turn; a node that already has the tx counts as sent. */
-async function broadcast(h: HouseState, raw: Hex): Promise<Hash> {
+type Included = { hash: Hash; block: number; ok: boolean };
+type SyncReceipt = { transactionHash: Hash; blockNumber: Hex; status: Hex };
+
+/**
+ * Sends with eth_sendRawTransactionSync: the node answers once the tx is in a block, so a nonce
+ * race with another server instance shows up as an immediate error instead of a silently dropped
+ * tx. Network errors / 429s move on to the next RPC; nonce errors bubble up for a resync.
+ */
+async function broadcastSync(h: HouseState, raw: Hex): Promise<Included> {
   let last: unknown;
   for (const s of h.senders) {
     try {
-      return await s.sendRawTransaction({ serializedTransaction: raw });
+      const r = (await s.request({ method: "eth_sendRawTransactionSync" as never, params: [raw] as never })) as SyncReceipt;
+      return { hash: r.transactionHash, block: Number(r.blockNumber), ok: r.status === "0x1" };
     } catch (e) {
       const msg = `${String(e)} ${(e as { details?: string }).details ?? ""}`;
-      if (/already known|known transaction|already imported/i.test(msg)) return keccak256(raw);
-      if (/nonce too low|nonce.*(low|used)|replacement|underpriced|insufficient/i.test(msg)) throw e;
+      if (/already known|known transaction|already imported/i.test(msg)) {
+        // Another node already has it: wait for it to land.
+        const hash = keccak256(raw);
+        const r = await h.client.waitForTransactionReceipt({ hash, pollingInterval: 150, timeout: 5_000 });
+        return { hash, block: Number(r.blockNumber), ok: r.status === "success" };
+      }
+      if (/nonce|replacement|underpriced|insufficient/i.test(msg)) throw e;
       last = e;
     }
   }
@@ -144,8 +156,8 @@ async function broadcast(h: HouseState, raw: Hex): Promise<Hash> {
 
 const sponsorAbi = parseAbi(["function sponsor(address[] players, uint256 each) payable"]);
 
-/** Signs and broadcasts one sponsor() call for `players` with the next house nonce. */
-function sendBatch(h: HouseState, players: Address[]): Promise<Hash> {
+/** Signs and sends one sponsor() call for `players` with the next house nonce; resolves once mined. */
+function sendBatch(h: HouseState, players: Address[]): Promise<Included> {
   return serial(h, async () => {
     const value = TOPUP_MON * BigInt(players.length);
     const data = encodeFunctionData({ abi: sponsorAbi, functionName: "sponsor", args: [players, TOPUP_MON] });
@@ -174,11 +186,11 @@ function sendBatch(h: HouseState, players: Address[]): Promise<Hash> {
           maxFeePerGas: f.maxFeePerGas,
           maxPriorityFeePerGas: f.maxPriorityFeePerGas,
         });
-        const hash = await broadcast(h, raw);
+        const included = await broadcastSync(h, raw);
         h.nonce += 1;
         if (h.balance) h.balance.value -= value;
-        if (paced) h.lastSentBlock = Number(await h.client.getBlockNumber().catch(() => BigInt(h.lastSentBlock)));
-        return hash;
+        if (paced) h.lastSentBlock = included.block;
+        return included;
       } catch (e) {
         h.nonce = null; // another instance or a dropped tx moved the nonce: resync and retry
         if (attempt >= 3) throw e;
@@ -188,8 +200,8 @@ function sendBatch(h: HouseState, players: Address[]): Promise<Hash> {
   });
 }
 
-/** Queues a player into the next sponsor() batch; resolves with that batch's tx hash. */
-function enqueue(h: HouseState, player: Address): Promise<Hash> {
+/** Queues a player into the next sponsor() batch; resolves once that batch is mined. */
+function enqueue(h: HouseState, player: Address): Promise<Included> {
   return new Promise((resolve, reject) => {
     h.batch.push({ player, resolve, reject });
     const flush = () => {
@@ -201,7 +213,7 @@ function enqueue(h: HouseState, player: Address): Promise<Hash> {
         h,
         waiters.map((w) => w.player),
       ).then(
-        (hash) => waiters.forEach((w) => w.resolve(hash)),
+        (r) => waiters.forEach((w) => w.resolve(r)),
         (e) => waiters.forEach((w) => w.reject(e)),
       );
     };
@@ -217,11 +229,8 @@ async function fund(h: HouseState, player: Address): Promise<Result> {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
       if (attempt > 0 && (await h.client.getBalance({ address: player })) >= MIN_MON) return { ok: true, sent: {}, block: 0 };
-      const hash = await enqueue(h, player);
-      // Monad confirms in under a second: a tx that isn't in after 6 s lost a nonce race with another
-      // instance and was dropped, so re-queue instead of waiting out a long timeout.
-      const receipt = await h.client.waitForTransactionReceipt({ hash, pollingInterval: 150, timeout: 6_000 });
-      if (receipt.status === "success") return { ok: true, sent: { mon: hash }, block: Number(receipt.blockNumber) };
+      const r = await enqueue(h, player);
+      if (r.ok) return { ok: true, sent: { mon: r.hash }, block: r.block };
       // A reverted batch (reserve rule) still consumed a nonce: just go again.
     } catch (e) {
       error = String(e).slice(0, 200);

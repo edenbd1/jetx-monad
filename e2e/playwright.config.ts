@@ -11,7 +11,7 @@ export default defineConfig({
     // Live game on Monad Testnet (costs gas from the house wallet).
     { name: "live", testMatch: /game\.spec\.ts/ },
     // Clip engine against the app in mock mode (free, deterministic).
-    { name: "mock", testMatch: /clips\.spec\.ts/ },
+    { name: "mock", testMatch: /(clips|fx)\.spec\.ts/ },
   ],
   workers: 1,
   fullyParallel: false,

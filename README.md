@@ -23,13 +23,15 @@ Built at **Monad Blitz Paris** (19 September 2026).
 
 ## Game math
 
-Multipliers are x100 fixed point on-chain. The crash point follows the classic crash-game distribution:
+Multipliers are x100 fixed point on-chain. The crash point starts from the classic crash-game draw and is made more generous for the testnet event:
 
 ```
-P(crash ≥ x) = 0.97 / x        (3% house edge, capped at 50x)
+base:   P(base ≥ x) = 0.985 / x          (1.5% instant busts at 1.00x)
+crash:  crash = 1 + (base − 1) × 1.5     (every flight above 1x stretched by 50%)
+        → P(crash ≥ x) = 0.985 / (1 + (x − 1) / 1.5), capped at 50x
 ```
 
-The rocket's multiplier grows as `m(t) = e^(0.1·t)` (2x after ~7 s, 5x after ~16 s, 10x after ~23 s). The cap is house-adjustable on-chain (`setMaxMultiplier`, between 2x and 1000x). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
+That gives a median crash around 2.45x, 59% of flights past 2x, 27% past 5x and 14% past 10x. The house can retune both knobs (`setCurve`) and the cap (`setMaxMultiplier`) on-chain within fixed bounds. The rocket's multiplier grows as `m(t) = e^(0.1·t)` (2x after ~7 s, 5x after ~16 s, 10x after ~23 s). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
 
 ## Contracts
 
@@ -37,6 +39,7 @@ The rocket's multiplier grows as `m(t) = e^(0.1·t)` (2x after ~7 s, 5x after ~1
 | --- | --- |
 | `JetX` | The game: `launch`, `cashOut`, `settle`, recent crash history, stats, faucet, house `grant`. |
 | `JetUSD` | 6-decimal test USDC. Only the game mints (payouts, faucet) and burns (bets), so playing never needs an approval. |
+| `GasSponsor` | Sends the same MON top-up to many players in one transaction, so a burst of arrivals costs the house one nonce, not one per player. |
 
 Randomness comes from block data at launch. That is fine for a testnet game with test dollars, but the crash point is readable once the launch is mined; a real-money version would draw it from a VRF or a commit-reveal house seed.
 
@@ -44,8 +47,9 @@ Randomness comes from block data at launch. That is fine for a testnet game with
 
 | Contract | Address |
 | --- | --- |
-| JetX | [`0xf6844e5DB26228BF9AFAF24F601456B506d818dB`](https://testnet.monadexplorer.com/address/0xf6844e5DB26228BF9AFAF24F601456B506d818dB) |
-| JetUSD (test USDC) | [`0x539287813BEfeCfbFEF62038b9A2bBf0dc787A30`](https://testnet.monadexplorer.com/address/0x539287813BEfeCfbFEF62038b9A2bBf0dc787A30) |
+| JetX | [`0xc3c698017dfB403D3fA8fB3d120AA4346A36cAE1`](https://testnet.monadexplorer.com/address/0xc3c698017dfB403D3fA8fB3d120AA4346A36cAE1) |
+| JetUSD (test USDC) | [`0x01e683c4Ed3b106b6edf454E52FB2A69cDB107Cd`](https://testnet.monadexplorer.com/address/0x01e683c4Ed3b106b6edf454E52FB2A69cDB107Cd) |
+| GasSponsor | [`0xab217220314aE766AF5266c8C55BA643758dBEfA`](https://testnet.monadexplorer.com/address/0xab217220314aE766AF5266c8C55BA643758dBEfA) |
 
 Measured on testnet: `launch` 160k gas (0.016 MON), `cashOut` 105k (0.011 MON), `settle` 84k (0.009 MON). Sign-to-receipt median **~480 ms**.
 

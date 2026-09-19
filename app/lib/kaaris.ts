@@ -28,23 +28,35 @@ export const POOLS = {
   /** Every flight starts with Kaaris placing his bet. */
   start: ["depart"],
   /** Just after lift-off, below 2x. */
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay", "kaaris-tchoin", "kaaris-que-du-sale"],
   /** Climbing, 2x-6x. */
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd", "kaaris-tchoin", "kaaris-que-du-sale", "kaaris-rend-ouf"],
   /** The orbit moment: Thomas Pesquet, big and centred, in every flight that gets there. */
   orbit: ["thomas-pesquet"],
   /** Getting scary, 6x-12x. */
-  high: ["ah-gars", "avant-quil-explose", "tous-mourir", "ca-va-peter", "dernier-mot", "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
+  high: ["ah-gars", "avant-quil-explose", "tous-mourir", "ca-va-peter", "dernier-mot", "kaaris-rend-ouf", "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
   /** Deep space, 12x+. */
   space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "dernier-mot", "dinguerie"],
   /** The player already cashed out and the rocket keeps going. */
-  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca", "oh-la-la", "enorme", "valide", "magnifique", "okay"],
+  afterCash: [
+    "vas-y-vas-y",
+    "allez-ca-monte",
+    "monte-monte",
+    "cest-bon-ca",
+    "oh-la-la",
+    "enorme",
+    "valide",
+    "magnifique",
+    "okay",
+    "kaaris-mbats-les-couilles",
+    "kaaris-rire",
+  ],
   /** Cash-outs by size. */
   cashTiny: ["eleonore", "ravi", "rigolo", "cest-cela-oui"],
-  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom", "valide", "magnifique", "okay"],
+  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom", "valide", "magnifique", "okay", "kaaris-rire"],
   cashSix: [{ id: "je-marrete-a-6", w: 5 }, "bim-bam-boom"],
-  cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche", "magnifique", "dinguerie", "valide"],
-  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
+  cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche", "magnifique", "dinguerie", "valide", "kaaris-rire", "kaaris-des-millions"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique", "kaaris-des-millions"],
   /** Watching the rocket fly on after you got out. */
   regret: ["la-haine", "pas-fini"],
   farAway: ["pas-fini", "la-haine"],
@@ -78,6 +90,8 @@ export const POOLS = {
     "houston",
     "cest-cela-oui",
     "pas-de-bras",
+    "kaaris-menteur-tricheur",
+    "kaaris-gros-menteur",
   ],
   crashMid: [
     { id: "bravo-nils", w: 2 },
@@ -93,6 +107,8 @@ export const POOLS = {
     "etchebest",
     "visiteurs-binz",
     "maillon-faible",
+    "kaaris-grosse-galere",
+    "kaaris-menteur-tricheur",
   ],
   crashBig: [
     { id: "bravo-nils", w: 2 },
@@ -106,9 +122,10 @@ export const POOLS = {
     "etchebest",
     "visiteurs-binz",
     "houston",
+    "kaaris-grosse-galere",
   ],
   /** Follow-up after a crash. */
-  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"],
+  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu", "kaaris-gros-menteur"],
   idle: ["laisse-voler", "pas-faux", "tres-simple", "bonne-situation", "cest-cela-oui"],
   broke: ["swipe-up", "la-hess", "malentendu", "pas-de-bras"],
 } as const satisfies Record<string, Pool>;

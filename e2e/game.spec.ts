@@ -2,6 +2,7 @@ import { devices, expect, test, type BrowserContext, type Page } from "@playwrig
 import type { Address } from "viem";
 import { activeRound, lastRoundOf, mon, round, Status, usdc } from "./chain";
 import {
+  BROKE_CLIPS,
   CASHOUT_CLIPS,
   clips,
   CRASH_CLIPS,
@@ -56,8 +57,7 @@ test("win: auto cash-out at 1.10x is two on-chain txs and pays bet x 1.10", asyn
   // A bet placed while the intro still plays is superseded by the launch clip; bet like a player would.
   await waitForQuietCam(page);
   await bet().tap();
-  await waitForClip(page, ["dix-balles"], 10_000);
-  // The launch line may be superseded by the 1.10x cash-out a second later (order: clips.spec.ts).
+  await waitForClip(page, ["depart"], 10_000);
   await expect(txRow(1)).toContainText(/\d+\s?ms/, { timeout: 20_000 });
   await waitForNextRound(page);
 
@@ -184,7 +184,7 @@ test("broke: losing everything shows REFILL, which tops the wallet back up to 1,
   }
   expect(await usdc(player)).toBeLessThan(0.1);
   await expect(page.locator(".cta-refill")).toBeVisible();
-  await waitForClip(page, ["swipe-up"], 30_000);
+  await waitForClip(page, BROKE_CLIPS, 30_000);
   await page.locator(".cta-refill").tap();
   await expect(bet()).toBeVisible({ timeout: 60_000 });
   expect(await usdc(player)).toBeGreaterThanOrEqual(1_000);

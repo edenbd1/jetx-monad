@@ -3,8 +3,9 @@ import type { Address, Hex } from "viem";
 import { expect } from "@playwright/test";
 import { addressOfKey } from "./chain";
 
-export const CASHOUT_CLIPS = ["je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y"];
-export const CRASH_CLIPS = ["putain", "la-haine", "crash-rembourse"];
+export const CASHOUT_CLIPS = ["je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "sch-incroyable", "je-suis-riche"];
+export const CRASH_CLIPS = ["putain", "bravo-nils", "macron-explosion", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah"];
+export const BROKE_CLIPS = ["swipe-up", "la-hess"];
 export const RETRY_CLIPS = ["on-recommence", "pas-grave"];
 
 /** Records every Kaaris clip the cam shows, in order, into window.__clips. */

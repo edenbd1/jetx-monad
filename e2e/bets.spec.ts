@@ -40,3 +40,17 @@ test("bets go past 1,000 USDC: MAX goes all-in, and only the balance caps a bet"
   await waitForNextRound(page, 60_000);
   await expect.poll(() => wallet(page), { timeout: 10_000 }).toBe(3_500);
 });
+
+test("the trophy opens the leaderboard: pilots ranked by USDC, richest first", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".splash").tap();
+  await expect(page.locator(".cta-bet")).toBeEnabled({ timeout: 20_000 });
+  await page.getByRole("button", { name: "Leaderboard" }).tap();
+  const board = page.getByRole("dialog", { name: "Leaderboard" });
+  await expect(board.locator(".lb-row").first()).toBeVisible({ timeout: 20_000 });
+  const amounts = await board.locator(".lb-usd").allTextContents();
+  const values = amounts.map((t) => Number(t.replace(/[^\d.]/g, "")));
+  expect(values).toEqual([...values].sort((a, b) => b - a));
+  await page.getByRole("button", { name: "Close leaderboard" }).tap();
+  await expect(board).toBeHidden();
+});

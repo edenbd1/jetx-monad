@@ -177,7 +177,7 @@ test("reloading keeps the same managed wallet, topping up gas only when it runs 
 
 test("broke: losing everything shows REFILL, which tops the wallet back up to 1,000 USDC", async () => {
   for (let i = 0; i < 3 && (await usdc(player)) >= 0.1; i++) {
-    const all = Math.min(1_000, Math.floor((await usdc(player)) * 100) / 100);
+    const all = Math.floor((await usdc(player)) * 100) / 100; // all-in: no max bet
     await setBet(page, all);
     await setAuto(page, null);
     await bet().tap();
@@ -190,4 +190,20 @@ test("broke: losing everything shows REFILL, which tops the wallet back up to 1,
   await page.locator(".cta-refill").tap();
   await expect(bet()).toBeVisible({ timeout: 60_000 });
   expect(await usdc(player)).toBeGreaterThanOrEqual(1_000);
+});
+
+test("leaderboard: the player is ranked with a TOI badge and their on-chain USDC", async () => {
+  await page.getByRole("button", { name: "Leaderboard" }).tap();
+  const board = page.getByRole("dialog", { name: "Leaderboard" });
+  await expect(board.locator(".lb-row").first()).toBeVisible({ timeout: 20_000 });
+  // The CDN caches the board a few seconds: wait for this wallet's latest balance.
+  const onChain = await usdc(player);
+  const shown = board.locator(".lb-row.is-me .lb-usd");
+  await expect
+    .poll(async () => Number(((await shown.textContent({ timeout: 1_000 }).catch(() => "")) ?? "").replace(/[^\d.]/g, "")), { timeout: 30_000 })
+    .toBeCloseTo(onChain, 2);
+  await expect(board.locator(".lb-row.is-me em")).toHaveText("TOI");
+  await expect(board.locator(".lb-me")).toContainText(/#\d+/);
+  await page.getByRole("button", { name: "Close leaderboard" }).tap();
+  await expect(board).toBeHidden();
 });

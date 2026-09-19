@@ -66,3 +66,12 @@ export async function waitForNextRound(page: Page, timeout = 150_000) {
 export async function waitForQuietCam(page: Page, timeout = 15_000) {
   await expect(page.locator(".cam")).not.toHaveAttribute("data-on", /.*/, { timeout });
 }
+
+/** Taps BET and waits for the jet to fly, or for an instant 1.00x bust (~4% of flights). */
+export async function launch(page: Page): Promise<"flying" | "busted"> {
+  await page.locator(".cta-bet").tap();
+  const cash = page.locator(".cta-cash");
+  const flew = page.locator(".flew");
+  await expect(cash.or(flew).first()).toBeVisible({ timeout: 20_000 });
+  return (await cash.isVisible()) ? "flying" : "busted";
+}

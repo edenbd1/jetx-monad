@@ -12,7 +12,8 @@ const MOCK_URL = process.env.MOCK_URL || "http://localhost:3201";
 const { defaultBrowserType, ...iphone } = devices["iPhone 13"];
 test.use({ ...iphone, baseURL: MOCK_URL });
 
-const SMALL_CRASH = ["putain", "bravo-nils", "macron-explosion"];
+const SMALL_CRASH = ["putain", "bravo-nils", "macron-explosion", "ravi"];
+const TINY_CASHOUT = ["eleonore", "ravi"];
 const BIG_CRASH = ["la-haine", "catastrophe"];
 const HUGE_CASHOUT = ["sch-incroyable", "je-suis-riche"];
 
@@ -35,14 +36,15 @@ async function fly(page: Page, auto: number | null) {
 
 const after = async (page: Page, from: number) => (await clips(page)).slice(from);
 
-test("every flight starts with Kaaris only, and a tiny cash-out gets the ironic Eléonore", async ({ page }) => {
+test("every flight starts with Kaaris only, and a tiny cash-out gets an ironic line (Eléonore / j'suis ravi)", async ({ page }) => {
   await open(page, 1.5);
   const from = (await clips(page)).length;
   await fly(page, 1.1);
   const seq = await after(page, from);
   expect(seq[0]).toBe("depart");
-  expect(seq).toContain("eleonore");
-  expect(seq.slice(seq.indexOf("eleonore")).includes("depart")).toBe(false);
+  const tiny = seq.findIndex((c) => TINY_CASHOUT.includes(c));
+  expect(tiny).toBeGreaterThan(0);
+  expect(seq.slice(tiny).includes("depart")).toBe(false);
 });
 
 test("an instant 1.00x bust is Brogniart's 'Ah !'", async ({ page }) => {
@@ -52,7 +54,7 @@ test("an instant 1.00x bust is Brogniart's 'Ah !'", async ({ page }) => {
   await expect.poll(async () => await after(page, from), { timeout: 10_000 }).toContain("brogniart-ah");
 });
 
-test("the first crash is 'remboursé', the next small ones are putain / Nils / Macron, then a retry line", async ({ page }) => {
+test("the first crash is 'remboursé', the next small ones are putain / Nils / Macron / ravi, then a retry line", async ({ page }) => {
   await open(page, 1.4);
   const from = (await clips(page)).length;
   await fly(page, null);

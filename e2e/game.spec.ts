@@ -57,7 +57,7 @@ test("win: auto cash-out at 1.10x is two on-chain txs and pays bet x 1.10", asyn
   await waitForQuietCam(page);
   await bet().tap();
   await waitForClip(page, ["dix-balles"], 10_000);
-  await waitForClip(page, ["cest-parti", "celle-la-bonne"], 15_000);
+  // The launch line may be superseded by the 1.10x cash-out a second later (order: clips.spec.ts).
   await expect(txRow(1)).toContainText(/\d+\s?ms/, { timeout: 20_000 });
   await waitForNextRound(page);
 

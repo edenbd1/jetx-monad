@@ -5,14 +5,16 @@ import {Script, console} from "forge-std/Script.sol";
 import {JetX} from "../src/JetX.sol";
 import {GasSponsor} from "../src/GasSponsor.sol";
 
-/// @notice Deploys JetX (which deploys its JetUSD) owned by the house wallet, and the GasSponsor.
+/// @notice Deploys JetX (which deploys its JetUSD) owned by the house wallet, and the GasSponsor
+///         (or reuses the one at `SPONSOR`: it holds no state).
 contract Deploy is Script {
     function run() external {
         uint256 pk = vm.envUint("PRIVATE_KEY");
         address house = vm.addr(pk);
         vm.startBroadcast(pk);
         JetX game = new JetX(house);
-        GasSponsor sponsor = new GasSponsor();
+        address existing = vm.envOr("SPONSOR", address(0));
+        GasSponsor sponsor = existing == address(0) ? new GasSponsor() : GasSponsor(existing);
         vm.stopBroadcast();
 
         string memory o = "deployment";

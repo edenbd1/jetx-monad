@@ -171,9 +171,9 @@ test("reloading keeps the same managed wallet, topping up gas only when it runs 
   const { addressOfKey } = await import("./chain");
   expect(addressOfKey(key as `0x${string}`)).toBe(player);
   expect(await usdc(player)).toBeCloseTo(usdcBefore, 6);
-  // The house refills 0.1 MON below 0.04 MON (a flight costs ~0.025), never above.
-  if (monBefore >= 0.04) expect(await mon(player)).toBeLessThanOrEqual(monBefore + 1e-9);
-  else expect(await mon(player)).toBeGreaterThanOrEqual(0.1);
+  // The house refills 0.2 MON below 0.09 MON (a flight costs ~0.033), never above.
+  if (monBefore >= 0.09) expect(await mon(player)).toBeLessThanOrEqual(monBefore + 1e-9);
+  else expect(await mon(player)).toBeGreaterThanOrEqual(0.2);
 });
 
 test("broke: losing everything shows REFILL, which tops the wallet back up to 1,000 USDC", async () => {

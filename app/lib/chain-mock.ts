@@ -33,7 +33,7 @@ export function createMockChain(): GameChain {
       return balances();
     },
     async launch(bet: number): Promise<Flight> {
-      if (bet < 0.1 || bet > 1_000) throw new Error("Bet must be between $0.10 and $1,000");
+      if (bet < 0.1) throw new Error("Minimum bet is $0.10");
       if (bet > usdc) throw new Error("Not enough USDC");
       const tx = await confirm();
       usdc -= bet;

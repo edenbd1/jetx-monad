@@ -23,12 +23,12 @@ type Fx = { key: number; kind: "crash" | "win" | "launch" | "milestone"; text: s
 type Flash = { key: number; color: "red" | "green" | "white" };
 
 const MIN_BET = 0.1;
-const MAX_BET = 1_000;
-const CHIPS = [1, 5, 10, 50, 100];
+const CHIPS = [1, 10, 50, 100, 500];
 const MUTE_KEY = "fusee-muted";
 const NEXT_ROUND_MS = 1_300;
 
-const clampBet = (n: number) => Math.min(MAX_BET, Math.max(MIN_BET, Math.round(n * 100) / 100));
+/** No house maximum: a bet is only limited by what the wallet holds. */
+const clampBet = (n: number, max = Infinity) => Math.max(MIN_BET, Math.min(max, Math.round(n * 100) / 100));
 /** Wall clock for the flight loop and handlers (kept out of render). */
 const nowMs = () => Date.now();
 const vibrate = (p: number | number[]) => {
@@ -88,6 +88,7 @@ export function Game() {
   }, []);
 
   const bet = clampBet(Number(betInput) || 0);
+  const maxBet = bal ? Math.floor(bal.usdc * 100) / 100 : Infinity;
   const auto = Math.max(1.01, Number(autoInput) || 0);
   const broke = !!bal && bal.usdc < MIN_BET;
   const busy = round === "launching" || round === "flying" || pending > 0;
@@ -538,11 +539,11 @@ export function Game() {
                       inputMode="decimal"
                       disabled={busy}
                       onChange={(e) => setBetInput(e.target.value.replace(/[^\d.]/g, ""))}
-                      onBlur={() => setBetInput(String(bet))}
+                      onBlur={() => setBetInput(String(clampBet(bet, maxBet)))}
                       aria-label="Bet amount in USDC"
                     />
                   </label>
-                  <button onClick={() => setBetInput(String(clampBet(bet >= 1 ? bet + 1 : bet * 2)))} disabled={busy}>
+                  <button onClick={() => setBetInput(String(clampBet(bet >= 1 ? bet + 1 : bet * 2, maxBet)))} disabled={busy}>
                     +
                   </button>
                 </div>
@@ -569,10 +570,13 @@ export function Game() {
               </div>
               <div className="chips">
                 {CHIPS.map((c) => (
-                  <button key={c} className={bet === c ? "is-on" : ""} onClick={() => setBetInput(String(c))} disabled={busy}>
+                  <button key={c} className={bet === c ? "is-on" : ""} onClick={() => setBetInput(String(c))} disabled={busy || c > maxBet}>
                     {c}
                   </button>
                 ))}
+                <button className={bet === maxBet ? "is-on" : ""} onClick={() => setBetInput(String(clampBet(maxBet)))} disabled={busy || !bal}>
+                  MAX
+                </button>
               </div>
               {cta}
             </section>

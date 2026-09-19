@@ -49,7 +49,7 @@ contract JetXTest is Test {
         (uint256 id, uint32 crash) = _launch(alice, 10e6);
         assertEq(usd.balanceOf(alice), 990e6);
         assertGe(crash, 100);
-        assertLe(crash, game.MAX_MULTIPLIER());
+        assertLe(crash, game.maxMultiplier());
         JetX.Round memory r = game.getRound(id);
         assertEq(r.player, alice);
         assertEq(r.bet, 10e6);
@@ -164,6 +164,7 @@ contract JetXTest is Test {
         uint256 atLeast2;
         uint256 atLeast10;
         uint256 instant;
+        uint256 capped;
         for (uint256 i; i < n; ++i) {
             vm.roll(block.number + 1);
             vm.prevrandao(bytes32(i * 7919 + 1));
@@ -171,6 +172,8 @@ contract JetXTest is Test {
             if (crash >= 200) ++atLeast2;
             if (crash >= 1000) ++atLeast10;
             if (crash == 100) ++instant;
+            assertLe(crash, 5_000, "above the 50x cap");
+            if (crash == 5_000) ++capped;
             vm.prank(alice);
             game.settle(id);
         }
@@ -179,5 +182,28 @@ contract JetXTest is Test {
         assertApproxEqAbs(atLeast2 * 1000 / n, 485, 30);
         assertApproxEqAbs(atLeast10 * 1000 / n, 97, 20);
         assertApproxEqAbs(instant * 1000 / n, 40, 12);
+        // 0.97 / 50 = 1.94% of flights would have gone past 50x: they all land exactly on the cap.
+        assertApproxEqAbs(capped * 1000 / n, 19, 8);
+    }
+
+    function test_houseCanMoveTheCapWithinBounds() public {
+        assertEq(game.maxMultiplier(), 5_000);
+        vm.expectRevert();
+        game.setMaxMultiplier(6_000); // not the house
+        vm.startPrank(house);
+        vm.expectRevert(JetX.BadCap.selector);
+        game.setMaxMultiplier(199);
+        vm.expectRevert(JetX.BadCap.selector);
+        game.setMaxMultiplier(100_001);
+        game.setMaxMultiplier(200);
+        vm.stopPrank();
+        for (uint256 i; i < 30; ++i) {
+            vm.roll(block.number + 1);
+            vm.prevrandao(bytes32(i + 1));
+            (uint256 id, uint32 crash) = _launch(alice, 1e6);
+            assertLe(crash, 200);
+            vm.prank(alice);
+            game.settle(id);
+        }
     }
 }

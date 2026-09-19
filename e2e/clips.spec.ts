@@ -15,16 +15,16 @@ test.use({ ...iphone, baseURL: MOCK_URL });
 
 // Mirrors POOLS in app/lib/kaaris.ts.
 const P = {
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee"],
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee"],
-  orbit: ["thomas-pesquet", "laisse-voler"],
-  cashTiny: ["eleonore", "ravi"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique"],
+  orbit: ["thomas-pesquet", "infini", "laisse-voler"],
+  cashTiny: ["eleonore", "ravi", "rigolo"],
   cashSix: ["je-marrete-a-6", "bim-bam-boom"],
-  cashHuge: ["sch-incroyable", "je-suis-riche", "bim-bam-boom"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
   regret: ["la-haine", "pas-fini"],
-  crashBust: ["brogniart-ah", "putain", "ravi", "bravo-nils"],
-  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah"],
-  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain"],
+  crashBust: ["brogniart-ah", "putain", "ravi", "bravo-nils", "coup-dur", "rigolo"],
+  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo"],
+  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain", "boulette"],
   retry: ["on-recommence", "pas-grave", "crash-rembourse"],
   idle: ["laisse-voler", "pas-faux", "tres-simple"],
   broke: ["swipe-up", "la-hess"],
@@ -78,7 +78,7 @@ test("small crashes on board draw small-crash lines", async ({ page }) => {
 });
 
 test("the climb isn't the same every flight: early/climb lines vary across flights", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(360_000);
   await open(page, 3);
   const firstLines: string[] = [];
   for (let i = 0; i < 5; i++) {
@@ -95,10 +95,10 @@ test("the climb isn't the same every flight: early/climb lines vary across fligh
 });
 
 test("the orbit moment plays a space line between 4.5x and 6x; Thomas Pesquet comes with his banner", async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(420_000);
   await open(page, 6.5);
   let pesquet = false;
-  for (let i = 0; i < 4 && !pesquet; i++) {
+  for (let i = 0; i < 5 && !pesquet; i++) {
     const from = (await clipsAt(page)).length;
     await setAuto(page, null);
     await page.locator(".cta-bet").tap();

@@ -3,9 +3,15 @@ import type { Address, Hex } from "viem";
 import { expect } from "@playwright/test";
 import { addressOfKey } from "./chain";
 
-export const CASHOUT_CLIPS = ["je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "ravi", "cest-bon-ca", "sch-incroyable", "je-suis-riche"];
-export const CRASH_CLIPS = ["putain", "bravo-nils", "macron-explosion", "ravi", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah"];
-export const ORBIT_CLIPS = ["thomas-pesquet", "laisse-voler"];
+export const CASHOUT_CLIPS = [
+  "je-marrete-a-6", "bim-bam-boom", "vas-y-vas-y", "eleonore", "ravi", "rigolo", "cest-bon-ca",
+  "sch-incroyable", "je-suis-riche", "mourir-tranquille", "magnifique", "dinguerie", "valide",
+];
+export const CRASH_CLIPS = [
+  "putain", "bravo-nils", "macron-explosion", "ravi", "la-haine", "catastrophe", "crash-rembourse", "brogniart-ah",
+  "boulette", "coup-dur", "rigolo",
+];
+export const ORBIT_CLIPS = ["thomas-pesquet", "infini", "laisse-voler"];
 export const BROKE_CLIPS = ["swipe-up", "la-hess"];
 export const RETRY_CLIPS = ["on-recommence", "pas-grave", "crash-rembourse"];
 

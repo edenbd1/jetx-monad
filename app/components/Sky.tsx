@@ -119,41 +119,6 @@ export function Sky({ scene }: { scene: RefObject<Scene> }) {
         ctx.fillStyle = neb;
         ctx.fillRect(0, 0, w, h);
       }
-      if (alt > 0.35) {
-        // a planet rises from the bottom-right past ~3x
-        const rise = Math.min(1, (alt - 0.35) / 0.55);
-        const pr = w * 0.42;
-        const px = w * 0.92;
-        const py = h + pr * 0.55 - rise * pr * 0.9;
-        const glow = ctx.createRadialGradient(px, py, pr * 0.9, px, py, pr * 1.35);
-        glow.addColorStop(0, "rgba(120, 180, 255, 0.25)");
-        glow.addColorStop(1, "rgba(120, 180, 255, 0)");
-        ctx.fillStyle = glow;
-        ctx.beginPath();
-        ctx.arc(px, py, pr * 1.35, 0, Math.PI * 2);
-        ctx.fill();
-        const body = ctx.createLinearGradient(px - pr, py - pr, px + pr, py + pr);
-        body.addColorStop(0, "#5d7bff");
-        body.addColorStop(0.5, "#3a2a9e");
-        body.addColorStop(1, "#150b3d");
-        ctx.fillStyle = body;
-        ctx.beginPath();
-        ctx.arc(px, py, pr, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255, 200, 255, 0.25)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.ellipse(px, py, pr * 1.45, pr * 0.28, -0.35, Math.PI * 1.05, Math.PI * 1.95);
-        ctx.stroke();
-      }
-      if (crashed) {
-        const heat = Math.max(0.28, 0.75 - sinceCrash / 1600);
-        const rg = ctx.createRadialGradient(w * 0.7, h * 0.35, 10, w * 0.6, h * 0.5, Math.max(w, h));
-        rg.addColorStop(0, `rgba(255, 45, 110, ${heat})`);
-        rg.addColorStop(1, `rgba(120, 10, 60, ${heat * 0.8})`);
-        ctx.fillStyle = rg;
-        ctx.fillRect(0, 0, w, h);
-      }
 
       // --- stars (parallax: faster as the rocket accelerates)
       const speed = flying ? 0.02 + Math.log(m) * 0.05 : 0.004;
@@ -268,6 +233,7 @@ export function Sky({ scene }: { scene: RefObject<Scene> }) {
         if (tc <= elapsed + 1) {
           const cx = X(tc);
           const cy = Y(s.cashedAt);
+          // Just the dot: the win chip under the multiplier already shows the value.
           ctx.fillStyle = "#2cf58f";
           ctx.shadowColor = "#2cf58f";
           ctx.shadowBlur = 12;
@@ -275,9 +241,11 @@ export function Sky({ scene }: { scene: RefObject<Scene> }) {
           ctx.arc(cx, cy, 5, 0, Math.PI * 2);
           ctx.fill();
           ctx.shadowBlur = 0;
-          ctx.font = `800 11px ${family}`;
-          ctx.textAlign = "left";
-          ctx.fillText(`✓ ${s.cashedAt.toFixed(2)}x`, cx + 8, cy - 8);
+          ctx.strokeStyle = "rgba(44, 245, 143, 0.45)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+          ctx.stroke();
         }
       }
 

@@ -12,6 +12,7 @@ Built at **Monad Blitz Paris** (19 September 2026).
 
 - **No wallet to connect.** The first visit creates a wallet in the browser; the house tops it up with gas (MON) and 1,000 test USDC.
 - **Two transactions per rocket.** `launch(bet)` when you tap BET (the bet is burned and the crash point drawn), then `cashOut(id, multiplier)` when you tap CASH OUT, or `settle(id)` once the rocket has blown up. Every flight is on-chain and linked to the explorer.
+- **Bet what you have.** From $0.10 up to the whole balance (MAX chip): there is no house maximum, so a lucky run can go all-in on its winnings.
 - **Instant on Monad.** Transactions are signed in the browser with a pre-warmed nonce, fees and gas limit, and sent with `eth_sendRawTransactionSync`: one round trip returns the receipt, in about half a second.
 - **Kaaris reacts live, with the French meme crew.** A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, drawn at random with weights, and the picks are remembered on the device, so the next game never replays the same lines at the same spots:
   - **start:** Kaaris only, "allez, je vais jouer 10 balles… c'est parti";
@@ -49,8 +50,8 @@ Randomness comes from block data at launch. That is fine for a testnet game with
 
 | Contract | Address |
 | --- | --- |
-| JetX | [`0xc3c698017dfB403D3fA8fB3d120AA4346A36cAE1`](https://testnet.monadexplorer.com/address/0xc3c698017dfB403D3fA8fB3d120AA4346A36cAE1) |
-| JetUSD (test USDC) | [`0x01e683c4Ed3b106b6edf454E52FB2A69cDB107Cd`](https://testnet.monadexplorer.com/address/0x01e683c4Ed3b106b6edf454E52FB2A69cDB107Cd) |
+| JetX | [`0x562f2a45882136439fb301f8c431BA506032cEBE`](https://testnet.monadexplorer.com/address/0x562f2a45882136439fb301f8c431BA506032cEBE) |
+| JetUSD (test USDC) | [`0xf9b4ba2415cE621422109d1833C8A620b5aA9cF8`](https://testnet.monadexplorer.com/address/0xf9b4ba2415cE621422109d1833C8A620b5aA9cF8) |
 | GasSponsor | [`0xab217220314aE766AF5266c8C55BA643758dBEfA`](https://testnet.monadexplorer.com/address/0xab217220314aE766AF5266c8C55BA643758dBEfA) |
 
 Measured on testnet: `launch` 160k gas (0.016 MON), `cashOut` 105k (0.011 MON), `settle` 84k (0.009 MON). Sign-to-receipt median **~480 ms**.

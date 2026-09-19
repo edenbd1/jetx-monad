@@ -62,7 +62,10 @@ export interface ClipPlayer {
   stop(): void;
 }
 
-type Request = { id: string; priority: Priority; mode: Mode };
+type Request = { id: string; priority: Priority; mode: Mode; at?: number };
+
+/** A queued reaction older than this is stale (the moment it reacted to has passed). */
+const PENDING_TTL_MS = 2_500;
 
 /** Decides which Kaaris clip plays when, from game events. */
 export class KaarisDirector {
@@ -184,17 +187,20 @@ export class KaarisDirector {
   private enqueue(id: string, priority: Priority, mode: Mode = "normal") {
     if (!clipById(id)) return;
     if (!this.current) return this.start({ id, priority, mode });
-    this.keep({ id, priority, mode });
+    this.keep({ id, priority, mode }, false);
   }
 
-  private keep(req: Request) {
-    if (!this.pending || req.priority >= this.pending.priority) this.pending = req;
+  /** `expires`: reactions go stale; explicit follow-ups (enqueue) always play. */
+  private keep(req: Request, expires = true) {
+    if (!this.pending || req.priority >= this.pending.priority) this.pending = { ...req, at: expires ? Date.now() : undefined };
   }
 
   private start(req: Request) {
     const clip = clipById(req.id);
     if (!clip) return;
     const token = ++this.token;
+    // A big moment (cash-out, crash, 5x) makes queued smaller reactions irrelevant.
+    if (req.priority >= PRIORITY.big && this.pending && this.pending.priority < req.priority) this.pending = null;
     this.current = { ...req, token };
     this.last = req.id;
     this.player.play(clip, req.mode).then(() => {
@@ -203,7 +209,7 @@ export class KaarisDirector {
       this.lastEndedAt = Date.now();
       const next = this.pending;
       this.pending = null;
-      if (next) this.start(next);
+      if (next && (next.at === undefined || Date.now() - next.at < PENDING_TTL_MS)) this.start(next);
     });
   }
 

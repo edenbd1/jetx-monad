@@ -72,7 +72,7 @@ async function timed<T>(step: Step, player: number, fn: () => Promise<T>): Promi
     samples[step].push(performance.now() - t0);
     return out;
   } catch (e) {
-    failures.push({ step, player, error: String((e as { shortMessage?: string }).shortMessage ?? e).slice(0, 160) });
+    failures.push({ step, player, error: String((e as { details?: string; shortMessage?: string }).details ?? (e as { shortMessage?: string }).shortMessage ?? e).slice(0, 160) });
     return undefined;
   }
 }

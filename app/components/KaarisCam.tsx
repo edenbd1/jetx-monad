@@ -98,7 +98,7 @@ export const KaarisCam = forwardRef<KaarisCamHandle, { muted: boolean; onMode?: 
 
   const mode = showing?.mode ?? "normal";
   return (
-    <div className={`cam cam-${mode}`} data-on={showing ? "" : undefined} aria-hidden={!showing}>
+    <div className={`cam cam-${mode}`} data-on={showing ? "" : undefined} data-clip={showing?.clip.id} aria-hidden={!showing}>
       {mode === "moon" && showing && <div className="cam-banner">🚀 THOMAS PESQUET</div>}
       <div className="cam-frame">
         <video ref={video} className="cam-video" playsInline preload="auto" muted={muted} poster="/kaaris/poster.jpg" />

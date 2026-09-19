@@ -7,6 +7,7 @@ import { getChain } from "@/lib/get-chain";
 import { msToReach, multiplierAt, toX100, type Address, type Balances, type Flight, type GameChain, type TxInfo } from "@/lib/game-types";
 import { KaarisDirector, RULES } from "@/lib/kaaris";
 import { mult, short, tier, usd } from "@/lib/format";
+import { BIG_CRASH_WORDS, CRASH_WORDS, MILESTONES, WIN_WORDS, pick, sfx, tierOf } from "@/lib/fx";
 
 type Round = "idle" | "launching" | "flying" | "crashed";
 type TxRow = {
@@ -18,6 +19,8 @@ type TxRow = {
   error?: string;
 };
 type Result = { win: boolean; amount: number; multiplier: number };
+type Fx = { key: number; kind: "crash" | "win" | "launch" | "milestone"; text: string; tier?: number };
+type Flash = { key: number; color: "red" | "green" | "white" };
 
 const MIN_BET = 0.1;
 const MAX_BET = 1_000;
@@ -54,12 +57,23 @@ export function Game() {
   const [crashedView, setCrashedView] = useState(false);
   const [camMode, setCamMode] = useState<string | null>(null);
   const [muted, setMuted] = useState(() => typeof window !== "undefined" && localStorage.getItem(MUTE_KEY) === "1");
+  const [fx, setFx] = useState<Fx | null>(null);
+  const [flash, setFlash] = useState<Flash | null>(null);
+  const [shake, setShake] = useState<"soft" | "hard" | null>(null);
+  const fxKey = useRef(0);
 
   const scene = useRef<Scene>({ phase: "idle", startedAt: 0, crash: 1, crashedAt: 0, cashedAt: null });
   const cam = useRef<KaarisCamHandle>(null);
   const multText = useRef<HTMLDivElement>(null);
   const cashText = useRef<HTMLSpanElement>(null);
-  const live = useRef({ flight: null as Flight | null, cashedAt: null as number | null, round: "idle" as Round, auto: null as number | null });
+  const live = useRef({
+    flight: null as Flight | null,
+    cashedAt: null as number | null,
+    round: "idle" as Round,
+    auto: null as number | null,
+    /** Index of the next milestone to celebrate this flight. */
+    milestone: 0,
+  });
   const txKey = useRef(0);
   const directorRef = useRef<KaarisDirector | null>(null);
 
@@ -89,6 +103,17 @@ export function Game() {
 
   const showError = useCallback((e: unknown) => {
     setToast(message(e));
+  }, []);
+
+  /** Slams a word across the sky, optionally with a screen flash and shake. */
+  const punch = useCallback((f: Omit<Fx, "key">, flashColor?: Flash["color"], shakeKind?: "soft" | "hard") => {
+    const key = ++fxKey.current;
+    setFx({ ...f, key });
+    if (flashColor) setFlash({ key, color: flashColor });
+    if (shakeKind) {
+      setShake(null);
+      requestAnimationFrame(() => setShake(shakeKind));
+    }
   }, []);
 
   useEffect(() => {
@@ -123,7 +148,9 @@ export function Game() {
   }, [prepare]);
 
   function enter() {
-    // Runs inside the tap: this unlocks audio on the facecam's <video>.
+    // Runs inside the tap: this unlocks audio on the facecam's <video> and the sound effects.
+    sfx.muted = muted;
+    sfx.unlock();
     director().landing();
     setStage("loading");
     prepare()
@@ -148,7 +175,7 @@ export function Game() {
     setResult(null);
     setCashed(null);
     setCrashedView(false);
-    live.current = { flight: null, cashedAt: null, round: "launching", auto: autoOn ? auto : null };
+    live.current = { flight: null, cashedAt: null, round: "launching", auto: autoOn ? auto : null, milestone: 0 };
     scene.current = { ...scene.current, phase: "launching", cashedAt: null };
     setRound("launching");
     director().bet();
@@ -162,6 +189,8 @@ export function Game() {
       scene.current = { phase: "flying", startedAt: f.startedAt, crash: f.crash, crashedAt: 0, cashedAt: null };
       setRound("flying");
       director().launched();
+      punch({ kind: "launch", text: "🚀 DÉCOLLAGE !" }, undefined, "soft");
+      sfx.launch();
     } catch (e) {
       endTx(key, { status: "error", error: message(e) });
       live.current.round = "idle";
@@ -183,8 +212,11 @@ export function Game() {
       const payout = (f.bet * Math.round(x * 100)) / 100;
       live.current.cashedAt = x;
       scene.current.cashedAt = x;
+      scene.current.cashedWallAt = nowMs();
       setCashed({ multiplier: x, payout });
       director().cashedOut(x);
+      punch({ kind: "win", text: `${pick(WIN_WORDS)} +${usd(payout)}` }, "green");
+      sfx.cashout();
       vibrate(35);
       const key = ++txKey.current;
       setTxs((rows) => [{ key, step: 2 as const, label: "cash out", status: "pending" as const }, ...rows].slice(0, 4));
@@ -201,14 +233,19 @@ export function Game() {
         })
         .finally(() => setPending((p) => Math.max(0, p - 1)));
     },
-    [director, refresh],
+    [director, refresh, punch],
   );
 
   const crash = useCallback(
     (f: Flight) => {
       const cashedAt = live.current.cashedAt;
       live.current.round = "crashed";
-      scene.current = { ...scene.current, phase: "crashed", crashedAt: nowMs() };
+      const big = f.crash >= 5;
+      // Three explosion styles; the big ones always go nuclear.
+      const variant = big ? 2 : Math.floor(Math.random() * 2);
+      scene.current = { ...scene.current, phase: "crashed", crashedAt: nowMs(), variant };
+      punch({ kind: "crash", text: pick(big ? BIG_CRASH_WORDS : CRASH_WORDS) }, big ? "white" : "red", "hard");
+      sfx.boom(big);
       if (multText.current) multText.current.textContent = mult(f.crash);
       setCrashedView(true);
       setRound("crashed");
@@ -237,7 +274,7 @@ export function Game() {
         setRound("idle");
       }, NEXT_ROUND_MS);
     },
-    [director, refresh],
+    [director, refresh, punch],
   );
 
   // Flight loop: multiplier text, live cash-out amount, auto cash-out, Kaaris thresholds.
@@ -255,7 +292,25 @@ export function Game() {
         return;
       }
       const m = multiplierAt(elapsed);
-      if (multText.current) multText.current.textContent = mult(m);
+      if (multText.current) {
+        multText.current.textContent = mult(m);
+        const t = String(tierOf(m));
+        if (multText.current.dataset.tier !== t) multText.current.dataset.tier = t;
+      }
+      const next = MILESTONES[live.current.milestone];
+      if (next && m >= next.at) {
+        live.current.milestone += 1;
+        scene.current.milestoneAt = nowMs();
+        scene.current.milestoneTier = next.tier;
+        punch({ kind: "milestone", text: next.label, tier: next.tier });
+        sfx.milestone(next.tier);
+        const el = multText.current;
+        if (el) {
+          el.classList.remove("pop");
+          void el.offsetWidth; // restart the animation
+          el.classList.add("pop");
+        }
+      }
       if (live.current.cashedAt === null) {
         if (cashText.current) cashText.current.textContent = usd(f.bet * m);
         if (autoAt !== null && m >= autoAt) cashOut(autoAt);
@@ -265,7 +320,7 @@ export function Game() {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [round, cashOut, crash, director]);
+  }, [round, cashOut, crash, director, punch]);
 
   // Idle chatter after 20 s on the bet screen.
   useEffect(() => {
@@ -294,6 +349,7 @@ export function Game() {
   function toggleMute() {
     const next = !muted;
     setMuted(next);
+    sfx.muted = next;
     cam.current?.setMuted(next);
     localStorage.setItem(MUTE_KEY, next ? "1" : "0");
   }
@@ -354,7 +410,14 @@ export function Game() {
 
   return (
     <div className="stage" onPointerDown={() => setNudge((n) => n + 1)}>
-      <div className="phone" data-cam={camMode ?? undefined}>
+      <div
+        className={`phone ${shake ? `shake-${shake}` : ""}`}
+        data-cam={camMode ?? undefined}
+        onAnimationEnd={(e) => {
+          if (e.target === e.currentTarget) setShake(null);
+        }}
+      >
+        {flash && <div key={flash.key} className={`fx-flash fx-flash-${flash.color}`} onAnimationEnd={() => setFlash(null)} />}
         {stage === "splash" && (
           <button className="splash" onClick={enter}>
             <div className="splash-bg" />
@@ -403,6 +466,15 @@ export function Game() {
 
             <section className="sky" data-phase={crashedView ? "crashed" : round}>
               <Sky scene={scene} />
+              {fx && (
+                <div
+                  key={fx.key}
+                  className={`fx-slam fx-${fx.kind} fx-tier-${fx.tier ?? 0}`}
+                  onAnimationEnd={() => setFx((cur) => (cur?.key === fx.key ? null : cur))}
+                >
+                  {fx.text}
+                </div>
+              )}
               <div className="sky-center">
                 {stage === "loading" && <div className="sky-status">Préparation du wallet…</div>}
                 {stage === "play" && round === "idle" && !crashedView && (

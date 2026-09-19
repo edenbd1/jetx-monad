@@ -14,54 +14,34 @@ export type Priority = (typeof PRIORITY)[keyof typeof PRIORITY];
 /** Visual treatment of the facecam bubble. */
 export type Mode = "normal" | "moon" | "intro" | "boom";
 
-/** A pool of lines that fit one moment of the game; `w` biases the draw (default 1). */
+/** A pool of lines that fit one moment of the game; `w` = copies of that line in the pool's deck (default 1). */
 type Pool = readonly (string | { readonly id: string; readonly w: number })[];
 
 // ---------------------------------------------------------------- tweak here
 //
-// Every moment has a pool of lines that make sense there. The director draws from the pool at
-// random, avoiding what played recently in the session, so the same moment sounds different from
-// one flight to the next while always staying on topic.
+// Every moment has a pool of lines that make sense there. Each pool is dealt like a shuffled deck
+// kept on the device: every line of the pool plays before one comes back, a line never plays twice
+// in the same flight, and nothing that played in the last few picks comes back, so the same moment
+// sounds different from one flight (and one game) to the next while always staying on topic.
 
 export const POOLS = {
   /** Every flight starts with Kaaris placing his bet. */
   start: ["depart"],
   /** Just after lift-off, below 2x. */
-  early: [
-    "jusquau-ciel",
-    "monte-monte",
-    "allez-ca-monte",
-    "cest-bon-ca",
-    { id: "ma-fusee", w: 1.5 },
-    { id: "oh-la-la", w: 1.3 },
-    { id: "enorme", w: 1.3 },
-    { id: "infini", w: 0.8 },
-  ],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini", "cest-parti", "celle-la-bonne", "okay"],
   /** Climbing, 2x-6x. */
-  climb: [
-    "monte-bien",
-    "je-vais-monter",
-    "cest-bon-ca",
-    "allez-ca-monte",
-    "monte-monte",
-    { id: "ma-fusee", w: 1.5 },
-    { id: "oh-la-la", w: 1.3 },
-    { id: "enorme", w: 1.3 },
-    { id: "infini", w: 1.3 },
-    "dinguerie",
-    "magnifique",
-  ],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
   /** The orbit moment somewhere around 5x: Thomas Pesquet most of the time, else Buzz or "laisse voler". */
   orbit: [{ id: "thomas-pesquet", w: 4 }, { id: "infini", w: 1.5 }, "laisse-voler"],
   /** Getting scary, 6x-12x. */
-  high: ["ah-gars", "avant-quil-explose", "tous-mourir", { id: "ca-va-peter", w: 1.5 }, "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
+  high: ["ah-gars", "avant-quil-explose", "tous-mourir", "ca-va-peter", "dernier-mot", "je-vais-monter", "monte-bien", "oh-la-la", "enorme"],
   /** Deep space, 12x+. */
-  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "infini", "dinguerie"],
+  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars", "ca-va-peter", "dernier-mot", "infini", "dinguerie"],
   /** The player already cashed out and the rocket keeps going. */
-  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca", "oh-la-la", "enorme", "valide", "magnifique"],
+  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca", "oh-la-la", "enorme", "valide", "magnifique", "okay"],
   /** Cash-outs by size. */
-  cashTiny: ["eleonore", "ravi", "rigolo"],
-  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom", "valide", "magnifique"],
+  cashTiny: ["eleonore", "ravi", "rigolo", "cest-cela-oui"],
+  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom", "valide", "magnifique", "okay"],
   cashSix: [{ id: "je-marrete-a-6", w: 5 }, "bim-bam-boom"],
   cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche", "magnifique", "dinguerie", "valide"],
   cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
@@ -69,14 +49,68 @@ export const POOLS = {
   regret: ["la-haine", "pas-fini"],
   farAway: ["pas-fini", "la-haine"],
   /** Crashes with the player on board, by how far it went. */
-  crashBust: [{ id: "brogniart-ah", w: 2 }, "putain", "ravi", "bravo-nils", "coup-dur", "rigolo"],
-  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah", "boulette", "coup-dur", "rigolo"],
-  crashMid: ["putain", "macron-explosion", "bravo-nils", "catastrophe", "crash-rembourse", "boulette", "coup-dur"],
-  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain", "boulette"],
+  // "Super… pour l'appareil photo" (Nils) is the crowd favourite: two cards in every crash deck.
+  crashBust: [
+    { id: "brogniart-ah", w: 2 },
+    { id: "bravo-nils", w: 2 },
+    "putain",
+    "ravi",
+    "coup-dur",
+    "rigolo",
+    "maillon-faible",
+    "coffe-merde",
+    "au-revoir",
+    "pas-de-bras",
+    "visiteurs-binz",
+  ],
+  crashSmall: [
+    { id: "bravo-nils", w: 2 },
+    "putain",
+    "ravi",
+    "macron-explosion",
+    "brogniart-ah",
+    "boulette",
+    "coup-dur",
+    "rigolo",
+    "maillon-faible",
+    "coffe-merde",
+    "au-revoir",
+    "houston",
+    "cest-cela-oui",
+    "pas-de-bras",
+  ],
+  crashMid: [
+    { id: "bravo-nils", w: 2 },
+    "putain",
+    "macron-explosion",
+    "catastrophe",
+    "crash-rembourse",
+    "boulette",
+    "coup-dur",
+    "sentence-irrevocable",
+    "monde-de-merde",
+    "houston",
+    "etchebest",
+    "visiteurs-binz",
+    "maillon-faible",
+  ],
+  crashBig: [
+    { id: "bravo-nils", w: 2 },
+    "la-haine",
+    "catastrophe",
+    "macron-explosion",
+    "putain",
+    "boulette",
+    "sentence-irrevocable",
+    "monde-de-merde",
+    "etchebest",
+    "visiteurs-binz",
+    "houston",
+  ],
   /** Follow-up after a crash. */
-  retry: ["on-recommence", "pas-grave", "crash-rembourse"],
-  idle: ["laisse-voler", "pas-faux", "tres-simple"],
-  broke: ["swipe-up", "la-hess"],
+  retry: ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"],
+  idle: ["laisse-voler", "pas-faux", "tres-simple", "bonne-situation", "cest-cela-oui"],
+  broke: ["swipe-up", "la-hess", "malentendu", "pas-de-bras"],
 } as const satisfies Record<string, Pool>;
 
 export const RULES = {
@@ -97,14 +131,15 @@ export const RULES = {
   /** Crash size boundaries (player on board). */
   crashMidFrom: 2,
   crashBigFrom: 5,
-  retryDelayMs: 1_200,
-  retryChance: 0.75,
+  /** After the crash line: sometimes a second crash reaction, then (often) an invitation to go again. */
+  crashEncoreChance: 0.5,
+  retryChance: 0.8,
   idleMs: 20_000,
   climbCooldownMs: 150,
   /** Rhythm: during a flight there's (almost) always a meme on screen: the next one starts after a short random pause (ms). */
   rhythmGapMs: [150, 500],
-  /** A line played within this many picks is heavily avoided (the memory persists across games on a device). */
-  recentWindow: 10,
+  /** A line played within this many picks is skipped while the deck has anything else (persists across games). */
+  recentWindow: 8,
 } as const;
 
 // ---------------------------------------------------------------- director
@@ -122,24 +157,49 @@ const PENDING_TTL_MS = 2_500;
 
 const POOL_NAME = new Map<Pool, string>(Object.entries(POOLS).map(([name, pool]) => [pool as Pool, name]));
 
+/** Where a pool borrows from once all its own lines played in this flight (same mood only). */
+const HYPE: Pool = [...POOLS.early, ...POOLS.climb, ...POOLS.afterCash, ...POOLS.orbit];
+const SCARY: Pool = [...POOLS.high, ...POOLS.space, ...HYPE];
+const SPILL = new Map<Pool, Pool>([
+  [POOLS.early, HYPE],
+  [POOLS.climb, HYPE],
+  [POOLS.afterCash, [...HYPE, ...POOLS.cashSmall, ...POOLS.cashBig, ...POOLS.cashHuge, ...POOLS.regret]],
+  [POOLS.high, SCARY],
+  [POOLS.space, SCARY],
+  [POOLS.crashBust, [...POOLS.crashSmall, ...POOLS.crashMid]],
+  [POOLS.crashSmall, [...POOLS.crashBust, ...POOLS.crashMid]],
+  [POOLS.crashMid, [...POOLS.crashSmall, ...POOLS.crashBig]],
+  [POOLS.crashBig, [...POOLS.crashMid]],
+]);
+
 /**
  * What this device has already seen, kept in localStorage so the next game (even after a reload)
- * starts from fresh lines instead of replaying the same ones.
+ * carries on each deck where it stopped instead of replaying the same lines.
  */
-const MEMORY_KEY = "fusee-memes-v1";
-type Memory = { history: string[]; lastPick: Record<string, string> };
+const MEMORY_KEY = "fusee-memes-v2";
+type Memory = { decks: Record<string, string[]>; seen: Record<string, number>; plays: number };
 
 function loadMemory(): Memory {
   try {
     const raw = typeof localStorage !== "undefined" ? localStorage.getItem(MEMORY_KEY) : null;
     if (raw) {
       const m = JSON.parse(raw) as Partial<Memory>;
-      return { history: Array.isArray(m.history) ? m.history.slice(-50) : [], lastPick: m.lastPick ?? {} };
+      return { decks: m.decks ?? {}, seen: m.seen ?? {}, plays: typeof m.plays === "number" ? m.plays : 0 };
     }
   } catch {
     // unreadable storage: start fresh
   }
-  return { history: [], lastPick: {} };
+  return { decks: {}, seen: {}, plays: 0 };
+}
+
+const entriesOf = (pool: Pool) => pool.map((e) => (typeof e === "string" ? { id: e, w: 1 } : e)).filter((e) => clipById(e.id));
+
+function shuffle<T>(list: T[]): T[] {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  return list;
 }
 
 const between = (range: readonly [number, number] | readonly number[]) => range[0] + Math.random() * (range[1] - range[0]);
@@ -150,11 +210,15 @@ export class KaarisDirector {
   private pending: Request | null = null;
   private lastEndedAt = 0;
   private token = 0;
-  /** Session-wide play history, newest last: drives the anti-repetition. */
-  private history: string[];
-  /** Last line drawn from each pool: the same moment never repeats its previous line. */
-  private lastPick: Record<string, string>;
-  private followUp: ReturnType<typeof setTimeout> | null = null;
+  /** Remaining cards of each pool's deck, persisted per device. */
+  private decks: Record<string, string[]>;
+  /** Play counter value when each line last played (per device), and the counter. */
+  private seen: Record<string, number>;
+  private plays: number;
+  /** Explicit follow-ups (second crash line, retry, broke) played in order once the cam is free. */
+  private queue: Request[] = [];
+  /** Lines already played since this flight's bet: none plays twice in a flight. */
+  private flightPlayed = new Set<string>();
 
   // per flight
   private flightStartedAt = 0;
@@ -166,13 +230,14 @@ export class KaarisDirector {
 
   constructor(private player: ClipPlayer) {
     const memory = loadMemory();
-    this.history = memory.history;
-    this.lastPick = memory.lastPick;
+    this.decks = memory.decks;
+    this.seen = memory.seen;
+    this.plays = memory.plays;
   }
 
   private saveMemory() {
     try {
-      localStorage.setItem(MEMORY_KEY, JSON.stringify({ history: this.history, lastPick: this.lastPick } satisfies Memory));
+      localStorage.setItem(MEMORY_KEY, JSON.stringify({ decks: this.decks, seen: this.seen, plays: this.plays } satisfies Memory));
     } catch {
       // storage full or blocked: the in-memory history still works for this game
     }
@@ -185,6 +250,8 @@ export class KaarisDirector {
   }
 
   bet() {
+    this.queue = [];
+    this.flightPlayed.clear();
     this.request(this.pick(POOLS.start), PRIORITY.reaction);
   }
 
@@ -196,7 +263,6 @@ export class KaarisDirector {
     this.highAt = between(RULES.highAt);
     this.spaceAt = between(RULES.spaceAt);
     this.nextGap = between(RULES.rhythmGapMs);
-    this.cancelFollowUp();
   }
 
   /** Called every frame while flying. */
@@ -239,13 +305,11 @@ export class KaarisDirector {
     if (!playerIn) return;
     const pool =
       crash <= 1 ? POOLS.crashBust : crash >= RULES.crashBigFrom ? POOLS.crashBig : crash >= RULES.crashMidFrom ? POOLS.crashMid : POOLS.crashSmall;
+    this.queue = [];
     this.request(this.pick(pool), PRIORITY.big, "boom");
-    this.cancelFollowUp();
-    if (Math.random() > RULES.retryChance) return;
-    this.followUp = setTimeout(() => {
-      this.followUp = null;
-      this.enqueue(this.pick(POOLS.retry), PRIORITY.ambient);
-    }, RULES.retryDelayMs);
+    // Explicit follow-ups, in order: another take on the crash, then an invitation to go again.
+    if (Math.random() < RULES.crashEncoreChance) this.enqueue(this.pick(pool), PRIORITY.reaction);
+    if (Math.random() < RULES.retryChance) this.enqueue(this.pick(POOLS.retry), PRIORITY.ambient);
   }
 
   idle() {
@@ -258,8 +322,8 @@ export class KaarisDirector {
   }
 
   stop() {
-    this.cancelFollowUp();
     this.pending = null;
+    this.queue = [];
     if (this.current) {
       this.current = null;
       this.player.stop();
@@ -276,35 +340,56 @@ export class KaarisDirector {
   }
 
   /**
-   * Weighted random draw from a pool, steering away from recent plays: the line that just played is
-   * excluded, lines from the last few picks keep a small weight (so tiny pools still work), older
-   * lines get their full weight.
+   * Deals the next line of a pool's deck. Cards are skipped (not discarded) while they already
+   * played in this flight or within the last few picks; once every card of the pool played in this
+   * flight, the pool borrows an unplayed line of the same mood. An empty deck is reshuffled with
+   * every line of the pool (`w` copies each), never starting with the line that just played.
    */
   private pick(pool: Pool): string {
-    const entries = pool.map((e) => (typeof e === "string" ? { id: e, w: 1 } : e)).filter((e) => clipById(e.id));
+    const entries = entriesOf(pool);
     if (entries.length <= 1) return entries[0]?.id ?? "";
     const name = POOL_NAME.get(pool) ?? "";
-    const previous = this.lastPick[name];
-    const scored = entries.map((e) => {
-      const last = this.history.lastIndexOf(e.id);
-      const ago = last < 0 ? Infinity : this.history.length - 1 - last;
-      const penalty = e.id === previous || ago === 0 ? 0 : ago < RULES.recentWindow ? 0.06 * (ago + 1) : 1;
-      return { id: e.id, w: e.w * penalty };
-    });
-    const chosen = this.draw(scored);
-    if (name) this.lastPick[name] = chosen;
+    const ids = new Set(entries.map((e) => e.id));
+    const unplayed = (id: string) => !this.flightPlayed.has(id);
+    let deck = (this.decks[name] ?? []).filter((id) => ids.has(id));
+    if (!deck.some(unplayed) && entries.some((e) => unplayed(e.id))) {
+      const inDeck = new Set(deck);
+      const fresh = shuffle(entries.filter((e) => !inDeck.has(e.id)).flatMap((e) => Array<string>(Math.max(1, Math.round(e.w))).fill(e.id)));
+      if (fresh.length > 1 && fresh[0] === this.lastPlayed()) fresh.push(fresh.shift() as string);
+      deck = [...deck, ...fresh];
+    }
+    const recent = (id: string) => this.seen[id] !== undefined && this.plays - this.seen[id] <= RULES.recentWindow;
+    let at = deck.findIndex((id) => unplayed(id) && !recent(id));
+    if (at < 0) at = deck.findIndex(unplayed);
+    let chosen: string;
+    if (at >= 0) {
+      chosen = deck[at];
+      deck.splice(at, 1);
+    } else {
+      chosen = this.borrow(pool) ?? this.leastRecent(entries.map((e) => e.id));
+    }
+    if (name) this.decks[name] = deck;
     return chosen;
   }
 
-  private draw(scored: { id: string; w: number }[]): string {
-    const total = scored.reduce((s, e) => s + e.w, 0);
-    if (total <= 0) return scored[Math.floor(Math.random() * scored.length)].id;
-    let r = Math.random() * total;
-    for (const e of scored) {
-      r -= e.w;
-      if (r <= 0) return e.id;
-    }
-    return scored[scored.length - 1].id;
+  /** A line of the same mood not played in this flight, preferring the least recently seen. */
+  private borrow(pool: Pool): string | null {
+    const spill = SPILL.get(pool);
+    if (!spill) return null;
+    const ids = [...new Set(entriesOf(spill).map((e) => e.id))].filter((id) => !this.flightPlayed.has(id));
+    return ids.length ? this.leastRecent(ids) : null;
+  }
+
+  /** Random among the least recently seen half of `ids`. */
+  private leastRecent(ids: string[]): string {
+    const sorted = shuffle([...ids]).sort((a, b) => (this.seen[a] ?? -1) - (this.seen[b] ?? -1));
+    return sorted[Math.floor(Math.random() * Math.max(1, Math.ceil(sorted.length / 2)))];
+  }
+
+  private lastPlayed(): string | undefined {
+    let best: string | undefined;
+    for (const [id, at] of Object.entries(this.seen)) if (best === undefined || at > this.seen[best]) best = id;
+    return best;
   }
 
   /** Keeps a line going every couple of seconds while the rocket flies. */
@@ -332,11 +417,13 @@ export class KaarisDirector {
     this.start(req);
   }
 
-  /** Plays after whatever is on now (or right away if idle). */
+  /** Plays after whatever is on now and what's already queued (or right away if idle). Never expires. */
   private enqueue(id: string, priority: Priority, mode: Mode = "normal") {
     if (!id || !clipById(id)) return;
     if (!this.current) return this.start({ id, priority, mode });
-    this.keep({ id, priority, mode }, false);
+    this.queue.push({ id, priority, mode });
+    // Reserved for this flight, so nothing else draws it before its turn.
+    this.flightPlayed.add(id);
   }
 
   /** `expires`: reactions go stale; explicit follow-ups (enqueue) always play. */
@@ -351,8 +438,8 @@ export class KaarisDirector {
     // A big moment (cash-out, crash, orbit) makes queued smaller reactions irrelevant.
     if (req.priority >= PRIORITY.big && this.pending && this.pending.priority < req.priority) this.pending = null;
     this.current = { ...req, token };
-    this.history.push(req.id);
-    if (this.history.length > 50) this.history.shift();
+    this.flightPlayed.add(req.id);
+    this.seen[req.id] = ++this.plays;
     this.saveMemory();
     this.player.play(clip, req.mode).then(() => {
       if (this.current?.token !== token) return; // interrupted
@@ -360,12 +447,9 @@ export class KaarisDirector {
       this.lastEndedAt = Date.now();
       const next = this.pending;
       this.pending = null;
-      if (next && (next.at === undefined || Date.now() - next.at < PENDING_TTL_MS)) this.start(next);
+      if (next && (next.at === undefined || Date.now() - next.at < PENDING_TTL_MS)) return this.start(next);
+      const queued = this.queue.shift();
+      if (queued) this.start(queued);
     });
-  }
-
-  private cancelFollowUp() {
-    if (this.followUp) clearTimeout(this.followUp);
-    this.followUp = null;
   }
 }

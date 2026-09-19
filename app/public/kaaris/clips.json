@@ -192,11 +192,115 @@
   "speaker": "Kaaris"
  },
  {
+  "id": "brogniart-ah",
+  "src": "/kaaris/brogniart-ah.mp4",
+  "duration": 0.9,
+  "caption": "Ah !",
+  "trigger": "instant-bust",
+  "speaker": "Denis Brogniart"
+ },
+ {
+  "id": "bravo-nils",
+  "src": "/kaaris/bravo-nils.mp4",
+  "duration": 5.03,
+  "caption": "Ah bah c'est bien Nils ! Super pour l'appareil photo !",
+  "trigger": "crash",
+  "speaker": "Nils"
+ },
+ {
+  "id": "eleonore",
+  "src": "/kaaris/eleonore.mp4",
+  "duration": 1.57,
+  "caption": "C'est bien Eléonore, on est content.",
+  "trigger": "tiny-cashout",
+  "speaker": "Eléonore"
+ },
+ {
+  "id": "sch-incroyable",
+  "src": "/kaaris/sch-incroyable.mp4",
+  "duration": 2.3,
+  "caption": "Incroyable 🤯",
+  "trigger": "big-cashout",
+  "speaker": "SCH"
+ },
+ {
+  "id": "je-suis-riche",
+  "src": "/kaaris/je-suis-riche.mp4",
+  "duration": 2.85,
+  "caption": "Je m'en fous, je suis riche 💸",
+  "trigger": "big-cashout",
+  "speaker": "Riche"
+ },
+ {
+  "id": "macron-explosion",
+  "src": "/kaaris/macron-explosion.mp4",
+  "duration": 3.6,
+  "caption": "… Explosion ! 💥",
+  "trigger": "crash",
+  "speaker": "Macron"
+ },
+ {
+  "id": "pas-fini",
+  "src": "/kaaris/pas-fini.mp4",
+  "duration": 3.2,
+  "caption": "Euh… c'est pas fini ?",
+  "trigger": "still-flying",
+  "speaker": "Jean Lassalle"
+ },
+ {
+  "id": "la-hess",
+  "src": "/kaaris/la-hess.mp4",
+  "duration": 4.3,
+  "caption": "Parce que c'est la hess",
+  "trigger": "broke",
+  "speaker": "Maskey"
+ },
+ {
+  "id": "tous-mourir",
+  "src": "/kaaris/tous-mourir.mp4",
+  "duration": 3.0,
+  "caption": "On va tous mourir !",
+  "trigger": "tension",
+  "speaker": "Mème"
+ },
+ {
+  "id": "visiteurs",
+  "src": "/kaaris/visiteurs.mp4",
+  "duration": 2.1,
+  "caption": "On va tous y mourir !",
+  "trigger": "tension",
+  "speaker": "Les Visiteurs"
+ },
+ {
+  "id": "catastrophe",
+  "src": "/kaaris/catastrophe.mp4",
+  "duration": 1.17,
+  "caption": "C'est une catastrophe.",
+  "trigger": "crash",
+  "speaker": "Taxi 2"
+ },
+ {
+  "id": "pas-faux",
+  "src": "/kaaris/pas-faux.mp4",
+  "duration": 1.1,
+  "caption": "Ouais, c'est pas faux !",
+  "trigger": "idle",
+  "speaker": "Kaamelott"
+ },
+ {
   "id": "ma-fusee",
   "src": "/kaaris/ma-fusee.mp4",
-  "duration": 1.95,
-  "caption": "Ça c'est ma fusée 🚀",
-  "trigger": "launch",
+  "duration": 4.7,
+  "caption": "Ça c'est ma fusée… 🚀",
+  "trigger": "climb",
   "speaker": "Morsay"
+ },
+ {
+  "id": "depart",
+  "src": "/kaaris/depart.mp4",
+  "duration": 2.6,
+  "caption": "Allez, je vais jouer 10 balles… C'est parti !",
+  "trigger": "bet",
+  "speaker": "Kaaris"
  }
 ]

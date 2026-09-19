@@ -17,6 +17,8 @@ import { CHAIN, RPC_URLS } from "@/lib/config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** A burst of arrivals queues on the house nonce: give the function room past Vercel's 10 s default. */
+export const maxDuration = 60;
 
 /**
  * Gas sponsorship for managed wallets: players get 0.1 MON (~4 flights) when they drop below

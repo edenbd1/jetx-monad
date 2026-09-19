@@ -1,6 +1,6 @@
 import clipsJson from "@/public/kaaris/clips.json";
 
-/** Kaaris reaction clips cut from his crash-game ad (public/kaaris). */
+/** Reaction clips: Kaaris's rocket-game ad plus the French meme crew (public/kaaris). */
 export type Clip = { id: string; src: string; duration: number; caption: string; trigger: string; speaker?: string };
 
 export const CLIPS = clipsJson as Clip[];
@@ -14,62 +14,76 @@ export type Priority = (typeof PRIORITY)[keyof typeof PRIORITY];
 /** Visual treatment of the facecam bubble. */
 export type Mode = "normal" | "moon" | "intro" | "boom";
 
-type Threshold = { at: number; clips: string[]; priority: Priority; mode?: Mode };
+/** A pool of lines that fit one moment of the game; `w` biases the draw (default 1). */
+type Pool = readonly (string | { readonly id: string; readonly w: number })[];
 
 // ---------------------------------------------------------------- tweak here
+//
+// Every moment has a pool of lines that make sense there. The director draws from the pool at
+// random, avoiding what played recently in the session, so the same moment sounds different from
+// one flight to the next while always staying on topic.
 
-/** Climb reactions, each fired once per flight when the multiplier crosses `at`. */
-export const CLIMB: Threshold[] = [
-  { at: 1.3, clips: ["jusquau-ciel"], priority: PRIORITY.ambient },
-  { at: 1.8, clips: ["monte-monte", "allez-ca-monte"], priority: PRIORITY.ambient },
-  { at: 2.2, clips: ["ma-fusee"], priority: PRIORITY.reaction },
-  { at: 2.5, clips: ["cest-bon-ca"], priority: PRIORITY.ambient },
-  { at: 3.2, clips: ["monte-bien"], priority: PRIORITY.ambient },
-  { at: 4, clips: ["je-vais-monter"], priority: PRIORITY.ambient },
-  { at: 5, clips: ["thomas-pesquet"], priority: PRIORITY.big, mode: "moon" },
-  { at: 7, clips: ["ah-gars"], priority: PRIORITY.reaction },
-  { at: 9, clips: ["avant-quil-explose"], priority: PRIORITY.reaction },
-  { at: 12, clips: ["tous-mourir"], priority: PRIORITY.reaction },
-  { at: 15, clips: ["laisse-voler"], priority: PRIORITY.reaction },
-  { at: 20, clips: ["visiteurs"], priority: PRIORITY.reaction },
-];
+export const POOLS = {
+  /** Every flight starts with Kaaris placing his bet. */
+  start: ["depart"],
+  /** Just after lift-off, below 2x. */
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", { id: "ma-fusee", w: 1.5 }],
+  /** Climbing, 2x-6x. */
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", { id: "ma-fusee", w: 1.5 }],
+  /** The orbit moment somewhere around 5x: Thomas Pesquet most of the time, else "laisse voler". */
+  orbit: [{ id: "thomas-pesquet", w: 3 }, "laisse-voler"],
+  /** Getting scary, 6x-12x. */
+  high: ["ah-gars", "avant-quil-explose", "tous-mourir", "je-vais-monter", "monte-bien"],
+  /** Deep space, 12x+. */
+  space: ["tous-mourir", "visiteurs", "laisse-voler", "avant-quil-explose", "ah-gars"],
+  /** The player already cashed out and the rocket keeps going. */
+  afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca"],
+  /** Cash-outs by size. */
+  cashTiny: ["eleonore", "ravi"],
+  cashSmall: ["vas-y-vas-y", "cest-bon-ca", "bim-bam-boom"],
+  cashSix: [{ id: "je-marrete-a-6", w: 5 }, "bim-bam-boom"],
+  cashBig: ["bim-bam-boom", "vas-y-vas-y", "je-suis-riche"],
+  cashHuge: ["sch-incroyable", "je-suis-riche", "bim-bam-boom"],
+  /** Watching the rocket fly on after you got out. */
+  regret: ["la-haine", "pas-fini"],
+  farAway: ["pas-fini", "la-haine"],
+  /** Crashes with the player on board, by how far it went. */
+  crashBust: [{ id: "brogniart-ah", w: 3 }, "putain", "ravi", "bravo-nils"],
+  crashSmall: ["putain", "bravo-nils", "ravi", "macron-explosion", "brogniart-ah"],
+  crashMid: ["putain", "macron-explosion", "bravo-nils", "catastrophe", "crash-rembourse"],
+  crashBig: ["la-haine", "catastrophe", "macron-explosion", "putain"],
+  /** Follow-up after a crash. */
+  retry: ["on-recommence", "pas-grave", "crash-rembourse"],
+  idle: ["laisse-voler", "pas-faux", "tres-simple"],
+  broke: ["swipe-up", "la-hess"],
+} as const satisfies Record<string, Pool>;
 
 export const RULES = {
   intro: "intro",
-  /** Every flight starts with Kaaris: "Allez, je vais jouer 10 balles… C'est parti". */
-  bet: "depart",
-  /** Cash-out reactions, checked in this order. */
-  cashOutSix: { clip: "je-marrete-a-6", from: 5.5, to: 6.5 },
-  cashOutHuge: { clips: ["sch-incroyable", "je-suis-riche"], from: 10 },
-  cashOutBig: { clip: "bim-bam-boom", from: 2 },
-  cashOutTiny: { clips: ["eleonore", "ravi"], below: 1.2 },
-  cashOutSmall: "vas-y-vas-y",
-  /** After you cashed out: the rocket keeps going (regret), then keeps going far (Lassalle). */
-  regret: { clip: "la-haine", ratio: 1.5, min: 3 },
-  stillFlying: { clip: "pas-fini", ratio: 3, min: 6 },
-  /** Crashes with the player on board, checked in this order. */
-  instantBust: "brogniart-ah",
-  firstCrash: "crash-rembourse",
-  bigCrash: { clips: ["la-haine", "catastrophe"], from: 5 },
-  crash: ["putain", "bravo-nils", "macron-explosion", "ravi"],
-  retry: ["on-recommence", "pas-grave"],
+  /** The orbit line fires once per flight at a random point in this range (multiplier). */
+  orbitAt: [4.5, 6],
+  /** Scary lines get a slot once per flight at a random point in each of these ranges. */
+  highAt: [7, 10],
+  spaceAt: [13, 22],
+  /** Cash-out size boundaries. */
+  cashTinyBelow: 1.2,
+  cashSix: [5.5, 6.5],
+  cashBigFrom: 2,
+  cashHugeFrom: 10,
+  /** After a cash-out: regret once the rocket reaches ratio x the cash-out (and min), then far away. */
+  regret: { ratio: 1.5, min: 3 },
+  farAway: { ratio: 3, min: 6 },
+  /** Crash size boundaries (player on board). */
+  crashMidFrom: 2,
+  crashBigFrom: 5,
   retryDelayMs: 1_200,
-  idle: ["laisse-voler", "pas-faux"],
+  retryChance: 0.75,
   idleMs: 20_000,
-  broke: ["swipe-up", "la-hess"],
   climbCooldownMs: 900,
-  /**
-   * Rhythm: during a flight, a new line starts about every 3 s (clips last 1-3 s): once the cam
-   * has been quiet this long, a filler from the current altitude's pool plays.
-   */
-  rhythmGapMs: 1_000,
-  rhythm: {
-    low: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca"],
-    mid: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte"],
-    high: ["ah-gars", "avant-quil-explose", "monte-bien", "je-vais-monter"],
-    space: ["tous-mourir", "laisse-voler", "avant-quil-explose", "ah-gars", "visiteurs"],
-    afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca"],
-  },
+  /** Rhythm: a new line once the cam has been quiet for a random gap in this range (ms). */
+  rhythmGapMs: [700, 1_900],
+  /** A line played within this many picks is heavily avoided. */
+  recentWindow: 6,
 } as const;
 
 // ---------------------------------------------------------------- director
@@ -85,21 +99,27 @@ type Request = { id: string; priority: Priority; mode: Mode; at?: number };
 /** A queued reaction older than this is stale (the moment it reacted to has passed). */
 const PENDING_TTL_MS = 2_500;
 
-/** Decides which Kaaris clip plays when, from game events. */
+const between = (range: readonly [number, number] | readonly number[]) => range[0] + Math.random() * (range[1] - range[0]);
+
+/** Decides which clip plays when, from game events. */
 export class KaarisDirector {
   private current: (Request & { token: number }) | null = null;
   private pending: Request | null = null;
-  private last: string | null = null;
   private lastEndedAt = 0;
   private token = 0;
-  private fired = new Set<number>();
-  private regretFired = false;
-  private stillFlyingFired = false;
-  private flightStartedAt = 0;
-  private usedThisFlight = new Set<string>();
-  private crashes = 0;
-  private retries = 0;
+  /** Session-wide play history, newest last: drives the anti-repetition. */
+  private history: string[] = [];
+  /** Last line drawn from each pool: the same moment never repeats its previous line. */
+  private lastPick = new Map<Pool, string>();
   private followUp: ReturnType<typeof setTimeout> | null = null;
+
+  // per flight
+  private flightStartedAt = 0;
+  private orbitAt = 5;
+  private highAt = 8;
+  private spaceAt = 16;
+  private fired = new Set<string>();
+  private nextGap = 1_000;
 
   constructor(private player: ClipPlayer) {}
 
@@ -110,91 +130,76 @@ export class KaarisDirector {
   }
 
   bet() {
-    this.request(RULES.bet, PRIORITY.reaction);
+    this.request(this.pick(POOLS.start), PRIORITY.reaction);
   }
 
   launched() {
-    // The bet line already says "c'est parti": the launch itself stays quiet.
+    // The start line already says "c'est parti": the launch itself stays quiet.
     this.fired.clear();
-    this.regretFired = false;
-    this.stillFlyingFired = false;
     this.flightStartedAt = Date.now();
-    this.usedThisFlight.clear();
+    this.orbitAt = between(RULES.orbitAt);
+    this.highAt = between(RULES.highAt);
+    this.spaceAt = between(RULES.spaceAt);
+    this.nextGap = between(RULES.rhythmGapMs);
     this.cancelFollowUp();
   }
 
   /** Called every frame while flying. */
   tick(multiplier: number, cashedAt: number | null) {
-    if (cashedAt !== null && !this.regretFired && multiplier >= RULES.regret.min && multiplier >= cashedAt * RULES.regret.ratio) {
-      this.regretFired = true;
-      this.request(RULES.regret.clip, PRIORITY.big);
-      return;
-    }
-    const far = RULES.stillFlying;
-    if (cashedAt !== null && !this.stillFlyingFired && multiplier >= far.min && multiplier >= cashedAt * far.ratio) {
-      this.stillFlyingFired = true;
-      this.request(far.clip, PRIORITY.reaction);
-      return;
-    }
-    // Only the highest newly crossed threshold fires (fast flights skip the smaller ones).
-    let hit: Threshold | null = null;
-    for (const t of CLIMB) {
-      if (multiplier >= t.at && !this.fired.has(t.at)) {
-        this.fired.add(t.at);
-        hit = t;
+    if (cashedAt !== null) {
+      if (this.once("regret", multiplier >= RULES.regret.min && multiplier >= cashedAt * RULES.regret.ratio)) {
+        return this.request(this.pick(POOLS.regret), PRIORITY.big);
       }
-    }
-    if (hit) {
-      this.request(hit.clips, hit.priority, hit.mode ?? "normal");
-      return;
+      if (this.once("far", multiplier >= RULES.farAway.min && multiplier >= cashedAt * RULES.farAway.ratio)) {
+        return this.request(this.pick(POOLS.farAway), PRIORITY.reaction);
+      }
+    } else {
+      if (this.once("orbit", multiplier >= this.orbitAt)) {
+        // Reaction priority: a cash-out or a crash during the orbit line must still get its own line.
+        const id = this.pick(POOLS.orbit);
+        return this.request(id, PRIORITY.reaction, id === "thomas-pesquet" ? "moon" : "normal");
+      }
+      if (this.once("high", multiplier >= this.highAt)) return this.request(this.pick(POOLS.high), PRIORITY.reaction);
+      if (this.once("space", multiplier >= this.spaceAt)) return this.request(this.pick(POOLS.space), PRIORITY.reaction);
     }
     this.keepRhythm(multiplier, cashedAt);
   }
 
-  /** Keeps a line going every few seconds while the rocket flies. */
-  private keepRhythm(multiplier: number, cashedAt: number | null) {
-    const now = Date.now();
-    if (this.current || this.pending || now - this.flightStartedAt < 1_500 || now - this.lastEndedAt < RULES.rhythmGapMs) return;
-    const r = RULES.rhythm;
-    const pool = cashedAt !== null ? r.afterCash : multiplier >= 10 ? r.space : multiplier >= 5 ? r.high : multiplier >= 2 ? r.mid : r.low;
-    const fresh = pool.filter((id) => !this.usedThisFlight.has(id));
-    this.request(fresh.length ? fresh : pool, PRIORITY.ambient);
-  }
-
   cashedOut(multiplier: number) {
-    const six = RULES.cashOutSix;
-    if (multiplier >= six.from && multiplier <= six.to) this.request(six.clip, PRIORITY.big);
-    else if (multiplier >= RULES.cashOutHuge.from) this.request(RULES.cashOutHuge.clips, PRIORITY.big);
-    else if (multiplier >= RULES.cashOutBig.from) this.request(RULES.cashOutBig.clip, PRIORITY.big);
-    else if (multiplier < RULES.cashOutTiny.below) this.request(RULES.cashOutTiny.clips, PRIORITY.big);
-    else this.request(RULES.cashOutSmall, PRIORITY.big);
+    const pool =
+      multiplier >= RULES.cashSix[0] && multiplier <= RULES.cashSix[1]
+        ? POOLS.cashSix
+        : multiplier >= RULES.cashHugeFrom
+          ? POOLS.cashHuge
+          : multiplier >= RULES.cashBigFrom
+            ? POOLS.cashBig
+            : multiplier < RULES.cashTinyBelow
+              ? POOLS.cashTiny
+              : POOLS.cashSmall;
+    this.request(this.pick(pool), PRIORITY.big);
   }
 
   /** The rocket blew up. `playerIn`: the player was still on board. */
   crashed(crash: number, playerIn: boolean) {
     if (!playerIn) return;
-    this.crashes += 1;
-    if (crash <= 1) this.request(RULES.instantBust, PRIORITY.big, "boom");
-    else if (this.crashes === 1) this.request(RULES.firstCrash, PRIORITY.big, "boom");
-    else if (crash >= RULES.bigCrash.from) this.request(RULES.bigCrash.clips, PRIORITY.big, "boom");
-    else this.request(RULES.crash, PRIORITY.big, "boom");
+    const pool =
+      crash <= 1 ? POOLS.crashBust : crash >= RULES.crashBigFrom ? POOLS.crashBig : crash >= RULES.crashMidFrom ? POOLS.crashMid : POOLS.crashSmall;
+    this.request(this.pick(pool), PRIORITY.big, "boom");
     this.cancelFollowUp();
+    if (Math.random() > RULES.retryChance) return;
     this.followUp = setTimeout(() => {
       this.followUp = null;
-      const id = RULES.retry[this.retries % RULES.retry.length];
-      this.retries += 1;
-      this.enqueue(id, PRIORITY.ambient);
+      this.enqueue(this.pick(POOLS.retry), PRIORITY.ambient);
     }, RULES.retryDelayMs);
   }
 
   idle() {
-    this.request(RULES.idle, PRIORITY.ambient);
+    this.request(this.pick(POOLS.idle), PRIORITY.ambient);
   }
 
   broke() {
     // Usually lands while the crash line plays: queue it right after, without expiring.
-    const id = RULES.broke[Math.floor(Math.random() * RULES.broke.length)];
-    this.enqueue(id, PRIORITY.reaction);
+    this.enqueue(this.pick(POOLS.broke), PRIORITY.reaction);
   }
 
   stop() {
@@ -206,12 +211,61 @@ export class KaarisDirector {
     }
   }
 
+  // ------------------------------------------------ choosing
+
+  /** True the first time `cond` holds for `key` in this flight. */
+  private once(key: string, cond: boolean) {
+    if (!cond || this.fired.has(key)) return false;
+    this.fired.add(key);
+    return true;
+  }
+
+  /**
+   * Weighted random draw from a pool, steering away from recent plays: the line that just played is
+   * excluded, lines from the last few picks keep a small weight (so tiny pools still work), older
+   * lines get their full weight.
+   */
+  private pick(pool: Pool): string {
+    const entries = pool.map((e) => (typeof e === "string" ? { id: e, w: 1 } : e)).filter((e) => clipById(e.id));
+    if (entries.length <= 1) return entries[0]?.id ?? "";
+    const previous = this.lastPick.get(pool);
+    const scored = entries.map((e) => {
+      const last = this.history.lastIndexOf(e.id);
+      const ago = last < 0 ? Infinity : this.history.length - 1 - last;
+      const penalty = e.id === previous || ago === 0 ? 0 : ago < RULES.recentWindow ? 0.08 * (ago + 1) : 1;
+      return { id: e.id, w: e.w * penalty };
+    });
+    const chosen = this.draw(scored);
+    this.lastPick.set(pool, chosen);
+    return chosen;
+  }
+
+  private draw(scored: { id: string; w: number }[]): string {
+    const total = scored.reduce((s, e) => s + e.w, 0);
+    if (total <= 0) return scored[Math.floor(Math.random() * scored.length)].id;
+    let r = Math.random() * total;
+    for (const e of scored) {
+      r -= e.w;
+      if (r <= 0) return e.id;
+    }
+    return scored[scored.length - 1].id;
+  }
+
+  /** Keeps a line going every couple of seconds while the rocket flies. */
+  private keepRhythm(multiplier: number, cashedAt: number | null) {
+    const now = Date.now();
+    if (this.current || this.pending || now - this.flightStartedAt < 1_500 || now - this.lastEndedAt < this.nextGap) return;
+    const pool =
+      cashedAt !== null ? POOLS.afterCash : multiplier >= 12 ? POOLS.space : multiplier >= 6 ? POOLS.high : multiplier >= 2 ? POOLS.climb : POOLS.early;
+    this.nextGap = between(RULES.rhythmGapMs);
+    this.request(this.pick(pool), PRIORITY.ambient);
+  }
+
   // ------------------------------------------------ queue
 
   /** Plays now if the slot is free (or interrupts lower priority), otherwise queues or drops. */
-  private request(ids: string | readonly string[], priority: Priority, mode: Mode = "normal") {
-    const id = this.pick(ids, priority);
-    if (!id) return;
+  private request(id: string, priority: Priority, mode: Mode = "normal") {
+    if (!id || !clipById(id)) return;
     const req = { id, priority, mode };
     if (this.current) {
       if (priority > this.current.priority) return this.start(req);
@@ -224,7 +278,7 @@ export class KaarisDirector {
 
   /** Plays after whatever is on now (or right away if idle). */
   private enqueue(id: string, priority: Priority, mode: Mode = "normal") {
-    if (!clipById(id)) return;
+    if (!id || !clipById(id)) return;
     if (!this.current) return this.start({ id, priority, mode });
     this.keep({ id, priority, mode }, false);
   }
@@ -238,11 +292,11 @@ export class KaarisDirector {
     const clip = clipById(req.id);
     if (!clip) return;
     const token = ++this.token;
-    // A big moment (cash-out, crash, 5x) makes queued smaller reactions irrelevant.
+    // A big moment (cash-out, crash, orbit) makes queued smaller reactions irrelevant.
     if (req.priority >= PRIORITY.big && this.pending && this.pending.priority < req.priority) this.pending = null;
     this.current = { ...req, token };
-    this.last = req.id;
-    this.usedThisFlight.add(req.id);
+    this.history.push(req.id);
+    if (this.history.length > 50) this.history.shift();
     this.player.play(clip, req.mode).then(() => {
       if (this.current?.token !== token) return; // interrupted
       this.current = null;
@@ -251,15 +305,6 @@ export class KaarisDirector {
       this.pending = null;
       if (next && (next.at === undefined || Date.now() - next.at < PENDING_TTL_MS)) this.start(next);
     });
-  }
-
-  /** Picks a clip, avoiding the one that just played when there's an alternative. */
-  private pick(ids: string | readonly string[], priority: Priority) {
-    const list = (typeof ids === "string" ? [ids] : [...ids]).filter((id) => clipById(id));
-    const fresh = list.filter((id) => id !== this.last);
-    // Background chatter never repeats back to back; reactions to events may.
-    const pool = fresh.length ? fresh : priority === PRIORITY.ambient ? [] : list;
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
   }
 
   private cancelFollowUp() {

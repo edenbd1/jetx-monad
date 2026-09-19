@@ -20,10 +20,10 @@ Built at **Monad Blitz Paris** (19 September 2026).
 Multipliers are x100 fixed point on-chain. The crash point follows the classic crash-game distribution:
 
 ```
-P(crash ≥ x) = 0.97 / x        (3% house edge, capped at 1000x)
+P(crash ≥ x) = 0.97 / x        (3% house edge, capped at 50x)
 ```
 
-The rocket's multiplier grows as `m(t) = e^(0.1·t)` (2x after ~7 s, 5x after ~16 s, 10x after ~23 s). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
+The rocket's multiplier grows as `m(t) = e^(0.1·t)` (2x after ~7 s, 5x after ~16 s, 10x after ~23 s). The cap is house-adjustable on-chain (`setMaxMultiplier`, between 2x and 1000x). A cash-out can never exceed the flight's crash point. Launching again forfeits an unfinished flight, and anyone can close a flight abandoned for an hour.
 
 ## Contracts
 
@@ -38,8 +38,8 @@ Randomness comes from block data at launch. That is fine for a testnet game with
 
 | Contract | Address |
 | --- | --- |
-| JetX | [`0x3D7083B4DF3DD15cB8034D650660a1Dc60d44833`](https://testnet.monadexplorer.com/address/0x3D7083B4DF3DD15cB8034D650660a1Dc60d44833) |
-| JetUSD (test USDC) | [`0xCc121a4Fc725CeaCa1dFf2569E0A612194fB22D4`](https://testnet.monadexplorer.com/address/0xCc121a4Fc725CeaCa1dFf2569E0A612194fB22D4) |
+| JetX | [`0xf6844e5DB26228BF9AFAF24F601456B506d818dB`](https://testnet.monadexplorer.com/address/0xf6844e5DB26228BF9AFAF24F601456B506d818dB) |
+| JetUSD (test USDC) | [`0x539287813BEfeCfbFEF62038b9A2bBf0dc787A30`](https://testnet.monadexplorer.com/address/0x539287813BEfeCfbFEF62038b9A2bBf0dc787A30) |
 
 Measured on testnet: `launch` 160k gas (0.016 MON), `cashOut` 105k (0.011 MON), `settle` 84k (0.009 MON). Sign-to-receipt median **~480 ms**.
 
@@ -51,7 +51,7 @@ Measured on testnet: `launch` 160k gas (0.016 MON), `cashOut` 105k (0.011 MON), 
 
 ## Tests
 
-- `contracts/`: 12 Foundry tests, including an empirical check of the crash distribution over 4,000 draws.
+- `contracts/`: 13 Foundry tests, including an empirical check of the crash distribution and the 50x cap over 4,000 draws.
 - `e2e/`: 7 Playwright tests in an iPhone viewport against the live game on Monad Testnet: landing (intro clip + managed wallet funding), auto cash-out win, loss and settle, manual cash-out paid at the tapped multiplier, the Thomas Pesquet clip past 5x, reload keeping the wallet, and going broke then refilling. Every step is checked on-chain.
 
 ```bash

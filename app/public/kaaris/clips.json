@@ -320,14 +320,6 @@
   "speaker": "Ça va péter"
  },
  {
-  "id": "infini",
-  "src": "/kaaris/infini.mp4",
-  "duration": 4.83,
-  "caption": "Vers l'infini et au-delà ! 🚀",
-  "trigger": "orbit",
-  "speaker": "Buzz"
- },
- {
   "id": "oh-la-la",
   "src": "/kaaris/oh-la-la.mp4",
   "duration": 3.4,

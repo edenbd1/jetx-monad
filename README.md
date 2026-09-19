@@ -16,8 +16,8 @@ Built at **Monad Blitz Paris** (19 September 2026).
 - **Instant on Monad.** Transactions are signed in the browser with a pre-warmed nonce, fees and gas limit, and sent with `eth_sendRawTransactionSync`: one round trip returns the receipt, in about half a second.
 - **Kaaris reacts live, with the French meme crew.** A facecam bubble keeps a meme on screen for the whole flight, popping right, then left, then right. Each moment of the flight has its own pool, dealt like a shuffled deck saved on the device: every meme of a pool plays before one comes back, none plays twice in the same flight, and the next game carries on the decks instead of replaying the same lines at the same spots:
   - **start:** Kaaris only, "allez, je vais jouer 10 balles… c'est parti";
-  - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée", "oh là là", "énorme", Jacquouille's "Okayyy", JCVD's "je suis aware", "vers l'infini et au-delà", "c'est une dinguerie", "magnifique";
-  - **orbit (random slot between 4.5x and 6x):** Thomas Pesquet, Buzz l'Éclair or "laisse voler ton avion";
+  - **climb:** Kaaris egging it on, Morsay's "ça c'est ma fusée", "oh là là", "énorme", Jacquouille's "Okayyy", JCVD's "je suis aware", "c'est une dinguerie", "magnifique";
+  - **orbit (random slot between 2.2x and 3.5x, every flight that gets there):** Thomas Pesquet, big and centred;
   - **high up:** "ça va péter", "on va tous mourir", Les Visiteurs, "avant qu'il explose", Foucault's "c'est votre dernier mot ?";
   - **cash out:** Eléonore or "rigolo" under 1.2x (ironic), "je m'arrête à 6", "bim bam boom", "validé", SCH, "je suis riche" or "je peux mourir tranquille" past 10x;
   - **after you cashed out:** "c'est grave la haine" as it keeps climbing, Jean Lassalle's "c'est pas fini ?" when it goes far;

@@ -15,9 +15,9 @@ test.use({ ...iphone, baseURL: MOCK_URL });
 
 // Mirrors POOLS in app/lib/kaaris.ts.
 const P = {
-  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "infini", "cest-parti", "celle-la-bonne", "okay"],
-  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "infini", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
-  orbit: ["thomas-pesquet", "infini", "laisse-voler"],
+  early: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca", "ma-fusee", "oh-la-la", "enorme", "cest-parti", "celle-la-bonne", "okay"],
+  climb: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte", "ma-fusee", "oh-la-la", "enorme", "dinguerie", "magnifique", "celle-la-bonne", "okay", "jcvd"],
+  orbit: ["thomas-pesquet"],
   cashTiny: ["eleonore", "ravi", "rigolo", "cest-cela-oui"],
   cashSix: ["je-marrete-a-6", "bim-bam-boom"],
   cashHuge: ["sch-incroyable", "je-suis-riche", "mourir-tranquille", "dinguerie", "magnifique"],
@@ -94,22 +94,22 @@ test("the climb isn't the same every flight: early/climb lines vary across fligh
   expect(new Set(firstLines).size).toBeGreaterThanOrEqual(3);
 });
 
-test("the orbit moment plays a space line between 4.5x and 6x; Thomas Pesquet comes with his banner", async ({ page }) => {
-  test.setTimeout(420_000);
-  await open(page, 6.5);
-  let pesquet = false;
-  for (let i = 0; i < 5 && !pesquet; i++) {
+test("every flight past 3.5x shows Thomas Pesquet, big with his banner, between 2.2x and 3.5x", async ({ page }) => {
+  test.setTimeout(240_000);
+  await open(page, 4.2);
+  for (let i = 0; i < 2; i++) {
     const from = (await clipsAt(page)).length;
     await setAuto(page, null);
     await page.locator(".cta-bet").tap();
+    await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET", { timeout: 40_000 });
     await expect(page.locator(".flew")).toBeVisible({ timeout: 60_000 });
-    const orbit = (await clipsAt(page)).slice(from).filter((c) => P.orbit.includes(c.id) && c.m >= 4.4 && c.m <= 6.2);
-    expect(orbit.length).toBeGreaterThanOrEqual(1);
-    if (orbit.some((c) => c.id === "thomas-pesquet")) pesquet = true;
+    const pesquet = (await clipsAt(page)).slice(from).filter((c) => c.id === "thomas-pesquet");
+    expect(pesquet).toHaveLength(1);
+    expect(pesquet[0].m).toBeGreaterThanOrEqual(2.1);
+    expect(pesquet[0].m).toBeLessThanOrEqual(3.6);
     await expect(page.locator(".cta-bet")).toBeVisible({ timeout: 30_000 });
     await waitForQuietCam(page, 20_000);
   }
-  expect(pesquet).toBe(true);
 });
 
 test("a cash-out near 6x favours 'je m'arrête à 6'; a huge one draws huge-win lines", async ({ page }) => {

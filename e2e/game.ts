@@ -12,7 +12,7 @@ export const CRASH_CLIPS = [
   "boulette", "coup-dur", "rigolo", "maillon-faible", "coffe-merde", "au-revoir", "pas-de-bras", "visiteurs-binz",
   "houston", "cest-cela-oui", "sentence-irrevocable", "monde-de-merde", "etchebest",
 ];
-export const ORBIT_CLIPS = ["thomas-pesquet", "infini", "laisse-voler"];
+export const ORBIT_CLIPS = ["thomas-pesquet"];
 export const BROKE_CLIPS = ["swipe-up", "la-hess", "malentendu", "pas-de-bras"];
 export const RETRY_CLIPS = ["on-recommence", "pas-grave", "crash-rembourse", "malentendu"];
 

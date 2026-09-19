@@ -130,7 +130,7 @@ test("manual cash-out mid-flight pays exactly bet x the multiplier at the tap", 
   test.skip(true, "no flight above 1.45x in 5 tries");
 });
 
-test("the orbit moment (4.5x-6x) plays a space line, Thomas Pesquet with his banner, and cashing out banks it", async () => {
+test("the orbit moment (2.2x-3.5x) shows Thomas Pesquet with his banner, and cashing out banks it", async () => {
   for (let attempt = 0; attempt < 12; attempt++) {
     const before = await usdc(player);
     await setBet(page, 1);
@@ -140,26 +140,23 @@ test("the orbit moment (4.5x-6x) plays a space line, Thomas Pesquet with his ban
       continue;
     }
     const id = await activeRound(player);
-    if ((await round(id)).crash < 640) {
+    if ((await round(id)).crash < 420) {
       await waitForNextRound(page);
       continue;
     }
-    // "infini" and "laisse-voler" also play elsewhere: the orbit slot is the one past 4.5x.
     const seen = (await clipsAt(page)).length;
-    const orbit = async () => (await clipsAt(page)).slice(seen).find((c) => ORBIT_CLIPS.includes(c.id) && c.m >= 4.5);
-    await expect.poll(async () => !!(await orbit()), { timeout: 60_000 }).toBe(true);
-    if ((await orbit())?.id === "thomas-pesquet") {
-      await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
-    }
+    const orbit = async () => (await clipsAt(page)).slice(seen).find((c) => ORBIT_CLIPS.includes(c.id) && c.m >= 2.1);
+    await expect.poll(async () => !!(await orbit()), { timeout: 40_000 }).toBe(true);
+    await expect(page.locator(".cam-banner")).toContainText("THOMAS PESQUET");
     await cash().tap();
     await waitForNextRound(page);
     const r = await round(id);
     expect(r.status).toBe(Status.CashedOut);
-    expect(r.cashedAt).toBeGreaterThanOrEqual(450);
+    expect(r.cashedAt).toBeGreaterThanOrEqual(220);
     expect(await usdc(player)).toBeCloseTo(before - 1 + r.cashedAt / 100, 6);
     return;
   }
-  test.skip(true, "no 6.4x flight in 12 tries");
+  test.skip(true, "no 4.2x flight in 12 tries");
 });
 
 test("reloading keeps the same managed wallet, topping up gas only when it runs low", async () => {

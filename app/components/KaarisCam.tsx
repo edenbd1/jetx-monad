@@ -16,9 +16,10 @@ export const KaarisCam = forwardRef<KaarisCamHandle, { muted: boolean; onMode?: 
 ) {
   const video = useRef<HTMLVideoElement>(null);
   const blobs = useRef(new Map<string, string>());
+  const side = useRef<"left" | "right">("left");
   const done = useRef<(() => void) | null>(null);
   const mutedRef = useRef(muted);
-  const [showing, setShowing] = useState<{ clip: Clip; mode: Mode; key: number } | null>(null);
+  const [showing, setShowing] = useState<{ clip: Clip; mode: Mode; key: number; side: "left" | "right" } | null>(null);
 
   // Preload every clip into memory.
   useEffect(() => {
@@ -66,7 +67,9 @@ export const KaarisCam = forwardRef<KaarisCamHandle, { muted: boolean; onMode?: 
           // Safety net if "ended" never fires (decode error, tab hidden…).
           const guard = setTimeout(finish, (clip.duration + 1.5) * 1000);
           done.current = finish;
-          setShowing({ clip, mode, key: Date.now() });
+          // Regular reactions alternate sides (right, left, right…); special modes stay centred.
+          if (mode === "normal") side.current = side.current === "right" ? "left" : "right";
+          setShowing({ clip, mode, key: Date.now(), side: side.current });
           if (!v) return finish();
           v.src = blobs.current.get(clip.id) ?? clip.src;
           v.muted = mutedRef.current;
@@ -98,7 +101,7 @@ export const KaarisCam = forwardRef<KaarisCamHandle, { muted: boolean; onMode?: 
 
   const mode = showing?.mode ?? "normal";
   return (
-    <div className={`cam cam-${mode}`} data-on={showing ? "" : undefined} data-clip={showing?.clip.id} aria-hidden={!showing}>
+    <div className={`cam cam-${mode} ${mode === "normal" && showing?.side === "left" ? "cam-left" : ""}`} data-on={showing ? "" : undefined} data-clip={showing?.clip.id} aria-hidden={!showing}>
       {mode === "moon" && showing && <div className="cam-banner">🚀 THOMAS PESQUET</div>}
       {mode === "boom" && showing && <div className="cam-banner cam-banner-boom">💥 CRASH</div>}
       <div className="cam-frame">

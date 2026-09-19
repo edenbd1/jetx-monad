@@ -426,6 +426,13 @@ input {
   transform: none;
 }
 
+/* Every other reaction pops on the left. */
+.cam.cam-left {
+  right: auto;
+  left: 18px;
+  transform-origin: top left;
+}
+
 .cam-moon {
   width: 138px;
   right: calc(50% - 69px);
@@ -931,9 +938,9 @@ input {
   position: absolute;
   /* Above the Kaaris cam (z 25). Launch / win / milestones sit left of it. */
   z-index: 30;
-  left: 38%;
+  left: 50%;
   top: 30%;
-  max-width: 62%;
+  max-width: 84%;
   pointer-events: none;
   text-align: center;
   line-height: 1.05;

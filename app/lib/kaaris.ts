@@ -12,7 +12,7 @@ export const PRIORITY = { ambient: 0, reaction: 1, big: 2, intro: 3 } as const;
 export type Priority = (typeof PRIORITY)[keyof typeof PRIORITY];
 
 /** Visual treatment of the facecam bubble. */
-export type Mode = "normal" | "moon" | "intro";
+export type Mode = "normal" | "moon" | "intro" | "boom";
 
 type Threshold = { at: number; clips: string[]; priority: Priority; mode?: Mode };
 
@@ -57,7 +57,19 @@ export const RULES = {
   idle: ["laisse-voler", "pas-faux"],
   idleMs: 20_000,
   broke: ["swipe-up", "la-hess"],
-  climbCooldownMs: 1_500,
+  climbCooldownMs: 900,
+  /**
+   * Rhythm: during a flight, a new line starts about every 3 s (clips last 1-3 s): once the cam
+   * has been quiet this long, a filler from the current altitude's pool plays.
+   */
+  rhythmGapMs: 1_000,
+  rhythm: {
+    low: ["jusquau-ciel", "monte-monte", "allez-ca-monte", "cest-bon-ca"],
+    mid: ["monte-bien", "je-vais-monter", "cest-bon-ca", "allez-ca-monte", "monte-monte"],
+    high: ["ah-gars", "avant-quil-explose", "monte-bien", "je-vais-monter"],
+    space: ["tous-mourir", "laisse-voler", "avant-quil-explose", "ah-gars", "visiteurs"],
+    afterCash: ["vas-y-vas-y", "allez-ca-monte", "monte-monte", "cest-bon-ca"],
+  },
 } as const;
 
 // ---------------------------------------------------------------- director
@@ -83,6 +95,8 @@ export class KaarisDirector {
   private fired = new Set<number>();
   private regretFired = false;
   private stillFlyingFired = false;
+  private flightStartedAt = 0;
+  private usedThisFlight = new Set<string>();
   private crashes = 0;
   private retries = 0;
   private followUp: ReturnType<typeof setTimeout> | null = null;
@@ -104,6 +118,8 @@ export class KaarisDirector {
     this.fired.clear();
     this.regretFired = false;
     this.stillFlyingFired = false;
+    this.flightStartedAt = Date.now();
+    this.usedThisFlight.clear();
     this.cancelFollowUp();
   }
 
@@ -128,7 +144,21 @@ export class KaarisDirector {
         hit = t;
       }
     }
-    if (hit) this.request(hit.clips, hit.priority, hit.mode ?? "normal");
+    if (hit) {
+      this.request(hit.clips, hit.priority, hit.mode ?? "normal");
+      return;
+    }
+    this.keepRhythm(multiplier, cashedAt);
+  }
+
+  /** Keeps a line going every few seconds while the rocket flies. */
+  private keepRhythm(multiplier: number, cashedAt: number | null) {
+    const now = Date.now();
+    if (this.current || this.pending || now - this.flightStartedAt < 1_500 || now - this.lastEndedAt < RULES.rhythmGapMs) return;
+    const r = RULES.rhythm;
+    const pool = cashedAt !== null ? r.afterCash : multiplier >= 10 ? r.space : multiplier >= 5 ? r.high : multiplier >= 2 ? r.mid : r.low;
+    const fresh = pool.filter((id) => !this.usedThisFlight.has(id));
+    this.request(fresh.length ? fresh : pool, PRIORITY.ambient);
   }
 
   cashedOut(multiplier: number) {
@@ -144,10 +174,10 @@ export class KaarisDirector {
   crashed(crash: number, playerIn: boolean) {
     if (!playerIn) return;
     this.crashes += 1;
-    if (crash <= 1) this.request(RULES.instantBust, PRIORITY.big);
-    else if (this.crashes === 1) this.request(RULES.firstCrash, PRIORITY.big);
-    else if (crash >= RULES.bigCrash.from) this.request(RULES.bigCrash.clips, PRIORITY.big);
-    else this.request(RULES.crash, PRIORITY.big);
+    if (crash <= 1) this.request(RULES.instantBust, PRIORITY.big, "boom");
+    else if (this.crashes === 1) this.request(RULES.firstCrash, PRIORITY.big, "boom");
+    else if (crash >= RULES.bigCrash.from) this.request(RULES.bigCrash.clips, PRIORITY.big, "boom");
+    else this.request(RULES.crash, PRIORITY.big, "boom");
     this.cancelFollowUp();
     this.followUp = setTimeout(() => {
       this.followUp = null;
@@ -162,7 +192,9 @@ export class KaarisDirector {
   }
 
   broke() {
-    this.request(RULES.broke, PRIORITY.reaction);
+    // Usually lands while the crash line plays: queue it right after, without expiring.
+    const id = RULES.broke[Math.floor(Math.random() * RULES.broke.length)];
+    this.enqueue(id, PRIORITY.reaction);
   }
 
   stop() {
@@ -210,6 +242,7 @@ export class KaarisDirector {
     if (req.priority >= PRIORITY.big && this.pending && this.pending.priority < req.priority) this.pending = null;
     this.current = { ...req, token };
     this.last = req.id;
+    this.usedThisFlight.add(req.id);
     this.player.play(clip, req.mode).then(() => {
       if (this.current?.token !== token) return; // interrupted
       this.current = null;
